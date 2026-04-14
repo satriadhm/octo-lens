@@ -57,7 +57,11 @@ export function Dashboard() {
           <>
             <div
               onClick={() => setSelected(null)}
-              className="fixed inset-0 bg-black/25 z-[99] backdrop-blur-[2px]"
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setSelected(null);
+              }}
+              role="presentation"
+              className="fixed inset-0 bg-foreground/10 z-[99] backdrop-blur-[1px] transition-opacity"
             />
             <DetailDrawer
               app={selected}
