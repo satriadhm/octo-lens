@@ -21,42 +21,58 @@ interface BudgetTabProps {
 
 export function BudgetTab({ budget }: BudgetTabProps) {
   const summaryCards = [
-    { label: "TERPAKAI", value: `${budget.spent}M`, color: "#2563EB" },
-    { label: "PROYEKSI AKHIR", value: `${budget.proj}M`, color: budget.levelColor },
-    { label: "BUDGET TOTAL", value: `${budget.total}M`, color: "var(--color-text-muted)" },
+    { label: "Spent", value: `${budget.spent}M`, color: "var(--color-blue)" },
+    {
+      label: "Projected End",
+      value: `${budget.proj}M`,
+      color: budget.levelColor,
+    },
+    {
+      label: "Total Budget",
+      value: `${budget.total}M`,
+      color: "var(--color-text-muted)",
+    },
   ];
 
   return (
-    <div className="flex flex-col gap-3.5">
-      {/* Alert banner */}
+    <div className="flex flex-col gap-4">
+      {/* Alert banner — background tint, no border-left */}
       {budget.level !== "SAFE" && (
         <div
-          className="rounded-lg px-3 py-2.5"
+          className="rounded-lg px-4 py-3"
           style={{
-            background: budget.levelColor + "12",
-            border: `1px solid ${budget.levelColor}40`,
-            borderLeft: `4px solid ${budget.levelColor}`,
+            background: `color-mix(in oklch, ${budget.levelColor} 8%, transparent)`,
+            border: `1px solid color-mix(in oklch, ${budget.levelColor} 20%, transparent)`,
           }}
         >
-          <div className="text-[11px] font-bold mb-0.5" style={{ color: budget.levelColor }}>
+          <div
+            className="text-xs font-semibold mb-0.5"
+            style={{ color: budget.levelColor }}
+          >
             {budget.level === "CRITICAL"
-              ? "\u26A0 Budget Alert: CRITICAL"
-              : "\u26A1 Budget Alert: WARNING"}
+              ? "Budget Alert: CRITICAL"
+              : "Budget Alert: WARNING"}
           </div>
-          <div className="text-[11px] text-txt-muted">
+          <div className="text-xs text-txt-muted">
             {budget.breach
-              ? `Prediksi over budget di bulan ke-${budget.breach.month}. Sisa ${budget.breach.month - budget.n} bulan lagi.`
-              : `Proyeksi akhir ${budget.proj}M dari budget ${budget.total}M.`}
+              ? `Projected to exceed budget in month ${budget.breach.month}. ${budget.breach.month - budget.n} months remaining.`
+              : `Projected end spend ${budget.proj}M against budget ${budget.total}M.`}
           </div>
         </div>
       )}
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2.5">
         {summaryCards.map((s, i) => (
-          <div key={i} className="bg-surface border border-border rounded-lg px-3 py-2.5">
+          <div
+            key={i}
+            className="bg-surface border border-border rounded-lg px-4 py-3"
+          >
             <Label color={s.color}>{s.label}</Label>
-            <div className="text-sm font-bold font-mono" style={{ color: s.color }}>
+            <div
+              className="text-sm font-semibold font-mono tabular-nums"
+              style={{ color: s.color }}
+            >
               {s.value}
             </div>
           </div>
@@ -65,18 +81,22 @@ export function BudgetTab({ budget }: BudgetTabProps) {
 
       {/* Chart */}
       <div>
-        <Label>AKTUAL vs PROYEKSI (dalam juta Rp)</Label>
+        <Label>Actual vs Projected (in millions IDR)</Label>
         <ResponsiveContainer width="100%" height={200}>
           <ComposedChart data={budget.chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="var(--color-border)"
+              vertical={false}
+            />
             <XAxis
               dataKey="m"
-              tick={{ fontSize: 9, fill: "var(--color-text-muted)" }}
+              tick={{ fontSize: 10, fill: "var(--color-text-muted)" }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fontSize: 9, fill: "var(--color-text-muted)" }}
+              tick={{ fontSize: 10, fill: "var(--color-text-muted)" }}
               tickFormatter={(v: number) => `${v}M`}
               axisLine={false}
               tickLine={false}
@@ -84,28 +104,30 @@ export function BudgetTab({ budget }: BudgetTabProps) {
             <Tooltip content={<ChartTooltip />} />
             <Bar
               dataKey="actual"
-              fill="#2563EB50"
-              stroke="#2563EB"
+              fill="var(--color-blue)"
+              fillOpacity={0.3}
+              stroke="var(--color-blue)"
               strokeWidth={1}
-              name="Aktual"
+              name="Actual"
               radius={[2, 2, 0, 0]}
             />
             <Bar
               dataKey="proj"
-              fill={budget.levelColor + "30"}
+              fill={budget.levelColor}
+              fillOpacity={0.2}
               stroke={budget.levelColor}
               strokeWidth={1}
               strokeDasharray="3 3"
-              name="Proyeksi"
+              name="Projected"
               radius={[2, 2, 0, 0]}
             />
             <Line
               type="monotone"
               dataKey="cumAct"
-              stroke="#2563EB"
+              stroke="var(--color-blue)"
               strokeWidth={2}
               dot={false}
-              name="Kumulatif Aktual"
+              name="Cumulative Actual"
             />
             <Line
               type="monotone"
@@ -114,17 +136,17 @@ export function BudgetTab({ budget }: BudgetTabProps) {
               strokeWidth={2}
               strokeDasharray="5 4"
               dot={false}
-              name="Kumulatif Proyeksi"
+              name="Cumulative Projected"
             />
             <ReferenceLine
               y={budget.total}
-              stroke="#DC2626"
+              stroke="var(--color-red)"
               strokeDasharray="6 3"
               strokeWidth={1.5}
               label={{
                 value: "Budget Ceiling",
-                fill: "#DC2626",
-                fontSize: 9,
+                fill: "var(--color-red)",
+                fontSize: 10,
                 position: "insideTopRight" as const,
               }}
             />

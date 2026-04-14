@@ -8,16 +8,16 @@ interface FeaturesTabProps {
 }
 
 function adoptionColor(adoption: number) {
-  if (adoption > 30) return "#059669";
-  if (adoption > 10) return "#D97706";
-  if (adoption > 2) return "#EA580C";
-  return "#DC2626";
+  if (adoption > 30) return "var(--color-green)";
+  if (adoption > 10) return "var(--color-amber)";
+  if (adoption > 2) return "var(--color-orange)";
+  return "var(--color-red)";
 }
 
 export function FeaturesTab({ app }: FeaturesTabProps) {
   return (
-    <div className="flex flex-col gap-2.5">
-      <Label>GOAL-TO-FEATURE TRACKER (API Adoption)</Label>
+    <div className="flex flex-col gap-3">
+      <Label>Goal-to-Feature Tracker (API Adoption)</Label>
 
       {app.api.endpoints.map((ep, i) => {
         const adColor = adoptionColor(ep.adoption);
@@ -26,60 +26,71 @@ export function FeaturesTab({ app }: FeaturesTabProps) {
         return (
           <div
             key={i}
-            className="rounded-lg px-3 py-2.5"
+            className="rounded-lg px-4 py-3"
             style={{
-              background: isZombie ? "#FEE2E230" : "var(--color-surface)",
-              border: `1px solid ${isZombie ? "#DC262640" : "var(--color-border)"}`,
-              borderLeft: `4px solid ${adColor}`,
+              background: isZombie
+                ? "color-mix(in oklch, var(--color-red) 5%, transparent)"
+                : "var(--color-surface)",
+              border: `1px solid ${isZombie ? "color-mix(in oklch, var(--color-red) 20%, transparent)" : "var(--color-border)"}`,
             }}
           >
-            <div className="flex justify-between items-center mb-1">
-              <code className="text-[10px] text-txt-muted font-mono">{ep.path}</code>
+            <div className="flex justify-between items-center mb-1.5">
+              <code className="text-[11px] text-txt-muted font-mono">
+                {ep.path}
+              </code>
               {isZombie && (
-                <Badge color="#DC2626" bg="#FEE2E2">
-                  &#129503; Zombie
+                <Badge color="var(--color-red)" bg="var(--color-red-dim)">
+                  Zombie
                 </Badge>
               )}
             </div>
-            <div className="flex gap-3 items-center">
+            <div className="flex gap-4 items-center">
               <div>
-                <div className="text-[9px] text-txt-dim font-mono">ADOPTION</div>
-                <div className="text-lg font-extrabold font-mono" style={{ color: adColor }}>
+                <div className="text-[10px] text-txt-dim font-display font-medium uppercase tracking-wider">
+                  Adoption
+                </div>
+                <div
+                  className="text-lg font-display font-extrabold"
+                  style={{ color: adColor }}
+                >
                   {ep.adoption}%
                 </div>
               </div>
               <div>
-                <div className="text-[9px] text-txt-dim font-mono">CALLS/MO</div>
-                <div className="text-lg font-extrabold font-mono text-txt">
+                <div className="text-[10px] text-txt-dim font-display font-medium uppercase tracking-wider">
+                  Calls/mo
+                </div>
+                <div className="text-lg font-display font-extrabold text-txt font-mono tabular-nums">
                   {ep.calls.toLocaleString()}
                 </div>
               </div>
               <div className="flex-1">
-                <div className="bg-surface-dim rounded-sm h-1.5">
+                <div className="bg-surface-dim rounded-full h-1.5">
                   <div
-                    className="h-full rounded-sm transition-[width] duration-500"
+                    className="h-full rounded-full transition-[width] duration-500"
                     style={{
                       background: adColor,
                       width: `${Math.min(100, ep.adoption)}%`,
+                      opacity: 0.75,
                     }}
                   />
                 </div>
               </div>
             </div>
             {isZombie && (
-              <div className="text-[10px] text-danger mt-1.5 leading-relaxed">
-                Fitur ini sudah dibangun tapi hampir tidak dipakai. Evaluasi apakah perlu
-                dipertahankan.
-              </div>
+              <p className="text-xs text-danger mt-2 leading-relaxed">
+                This feature was built but is barely used. Evaluate whether to
+                keep it.
+              </p>
             )}
           </div>
         );
       })}
 
-      <div className="bg-surface border border-border rounded-lg px-3 py-2.5 mt-1">
-        <div className="text-[10px] text-txt-muted">
-          Total API calls bulan ini:{" "}
-          <span className="text-txt font-mono font-bold">
+      <div className="bg-surface border border-border rounded-lg px-4 py-3 mt-1">
+        <div className="text-xs text-txt-muted">
+          Total API calls this month:{" "}
+          <span className="text-txt font-mono font-semibold tabular-nums">
             {app.api.totalReqs.toLocaleString()}
           </span>
         </div>
