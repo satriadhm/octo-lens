@@ -15,20 +15,26 @@ export function ROICard({ app, roi, onSelect, selected }: ROICardProps) {
   return (
     <div
       onClick={() => onSelect(app)}
-      className="rounded-[10px] px-3.5 py-3 cursor-pointer transition-all duration-150"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(app);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      className="rounded-xl px-4 py-3.5 cursor-pointer transition-all duration-150 focus-visible:outline-2 focus-visible:outline-brand/40 focus-visible:outline-offset-2"
       style={{
         background: selected ? roi.bg : "var(--color-surface)",
-        border: `1px solid ${selected ? roi.color + "60" : "var(--color-border)"}`,
-        borderTop: `3px solid ${roi.color}`,
-        boxShadow: selected
-          ? `0 2px 12px ${roi.color}25`
-          : "0 1px 3px rgba(0,0,0,0.05)",
+        border: `1px solid ${selected ? roi.color + "40" : "var(--color-border)"}`,
       }}
     >
-      <div className="flex justify-between items-start mb-2">
+      <div className="flex justify-between items-start mb-2.5">
         <div>
-          <div className="text-[11px] font-bold text-txt mb-0.5">{app.name}</div>
-          <div className="text-[9px] text-txt-dim font-mono">
+          <div className="text-xs font-semibold text-txt mb-0.5">
+            {app.name}
+          </div>
+          <div className="text-[11px] text-txt-dim">
             {app.type} &middot; {app.team}
           </div>
         </div>
@@ -37,19 +43,23 @@ export function ROICard({ app, roi, onSelect, selected }: ROICardProps) {
         </Badge>
       </div>
       <div
-        className="text-[28px] font-extrabold font-mono leading-none mb-1"
+        className="text-2xl font-display font-extrabold leading-none mb-1.5"
         style={{ color: roi.color }}
       >
         {roi.pct > 0 ? "+" : ""}
         {roi.pct}%
       </div>
       <div className="flex justify-between items-center">
-        <div className="text-[10px] text-txt-muted">Net: {idr(roi.netValue)}</div>
+        <div className="text-[11px] text-txt-muted">Net: {idr(roi.netValue)}</div>
         <div
-          className="text-[10px]"
-          style={{ color: roi.trend >= 0 ? "var(--color-green)" : "var(--color-red)" }}
+          className="text-[11px] font-medium"
+          style={{
+            color:
+              roi.trend >= 0 ? "var(--color-green)" : "var(--color-red)",
+          }}
         >
-          {roi.trend >= 0 ? "\u25B2" : "\u25BC"} {Math.abs(roi.trend)}% vs lalu
+          {roi.trend >= 0 ? "\u25B2" : "\u25BC"} {Math.abs(roi.trend)}% vs
+          last month
         </div>
       </div>
     </div>

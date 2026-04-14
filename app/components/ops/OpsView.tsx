@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   BarChart,
   Bar,
@@ -21,26 +22,32 @@ interface OpsViewProps {
 }
 
 function rtColor(ms: number) {
-  if (ms > 700) return "#DC2626";
-  if (ms > 400) return "#D97706";
-  return "#059669";
+  if (ms > 700) return "var(--color-red)";
+  if (ms > 400) return "var(--color-amber)";
+  return "var(--color-green)";
 }
 
 function uxColor(score: number) {
-  if (score >= 70) return "#059669";
-  if (score >= 50) return "#D97706";
-  return "#DC2626";
+  if (score >= 70) return "var(--color-green)";
+  if (score >= 50) return "var(--color-amber)";
+  return "var(--color-red)";
 }
 
+type SortKey = "name" | "mau" | "response" | "uptime" | "roi" | "ux";
+type SortDir = "asc" | "desc";
+
 export function OpsView({ enriched, onSelect }: OpsViewProps) {
+  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+
   const rtData = enriched.map((e) => ({
     name: e.app.shortName,
     ms: e.app.metrics.responseMs,
-    fill: rtColor(e.app.metrics.responseMs),
   }));
 
   const avgResponse = Math.round(
-    enriched.reduce((s, e) => s + e.app.metrics.responseMs, 0) / enriched.length,
+    enriched.reduce((s, e) => s + e.app.metrics.responseMs, 0) /
+      enriched.length,
   );
   const slowest = [...enriched].sort(
     (a, b) => b.app.metrics.responseMs - a.app.metrics.responseMs,
@@ -49,24 +56,80 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
   const totalMAU = enriched.reduce((s, e) => s + e.app.metrics.mau, 0);
 
   const kpis = [
-    { l: "AVG RESPONSE", v: `${avgResponse}ms`, c: "#2563EB" },
-    { l: "SLOWEST APP", v: slowest.app.shortName, c: "#D97706" },
-    { l: "MIN UPTIME", v: `${minUptime}%`, c: "#EA580C" },
-    { l: "TOTAL MAU", v: totalMAU.toLocaleString(), c: "#059669" },
+    { l: "Avg Response", v: `${avgResponse}ms`, c: "var(--color-blue)" },
+    { l: "Slowest App", v: slowest.app.shortName, c: "var(--color-amber)" },
+    { l: "Min Uptime", v: `${minUptime}%`, c: "var(--color-orange)" },
+    { l: "Total MAU", v: totalMAU.toLocaleString(), c: "var(--color-green)" },
+  ];
+
+  function handleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir("desc");
+    }
+  }
+
+  const sorted = [...enriched].sort((a, b) => {
+    const dir = sortDir === "asc" ? 1 : -1;
+    switch (sortKey) {
+      case "name":
+        return a.app.name.localeCompare(b.app.name) * dir;
+      case "mau":
+        return (a.app.metrics.mau - b.app.metrics.mau) * dir;
+      case "response":
+        return (a.app.metrics.responseMs - b.app.metrics.responseMs) * dir;
+      case "uptime":
+        return (a.app.metrics.uptime - b.app.metrics.uptime) * dir;
+      case "roi":
+        return (a.roi.pct - b.roi.pct) * dir;
+      case "ux":
+        return (a.app.ux.score - b.app.ux.score) * dir;
+      default:
+        return 0;
+    }
+  });
+
+  const sortIndicator = (key: SortKey) =>
+    sortKey === key ? (sortDir === "asc" ? " \u2191" : " \u2193") : "";
+
+  const columns: { key: SortKey | ""; label: string; sortable: boolean }[] = [
+    { key: "name", label: "Application", sortable: true },
+    { key: "", label: "Type", sortable: false },
+    { key: "mau", label: "MAU", sortable: true },
+    { key: "response", label: "Response", sortable: true },
+    { key: "uptime", label: "Uptime", sortable: true },
+    { key: "roi", label: "ROI", sortable: true },
+    { key: "", label: "Budget", sortable: false },
+    { key: "ux", label: "UX", sortable: true },
+    { key: "", label: "", sortable: false },
   ];
 
   return (
-    <div className="p-5 flex flex-col gap-4 overflow-y-auto h-full">
+    <div className="p-6 flex flex-col gap-6 overflow-y-auto h-full max-w-[1400px] mx-auto w-full">
+      {/* Narrative */}
+      <div className="animate-fade-in-up">
+        <h1 className="text-xl font-display font-bold text-txt mb-1">
+          Operations Dashboard
+        </h1>
+        <p className="text-sm text-txt-muted">
+          Real-time application health and performance metrics
+        </p>
+      </div>
+
       {/* Ops KPI */}
-      <div className="grid grid-cols-4 gap-2.5">
+      <div className="grid grid-cols-4 gap-4 animate-fade-in-up stagger-1">
         {kpis.map((k, i) => (
           <div
             key={i}
-            className="bg-surface rounded-[10px] px-3.5 py-3 border border-border shadow-sm"
-            style={{ borderTop: `3px solid ${k.c}` }}
+            className="bg-surface rounded-xl px-5 py-4 border border-border"
           >
-            <Label color={k.c}>{k.l}</Label>
-            <div className="text-xl font-extrabold font-mono" style={{ color: k.c }}>
+            <Label>{k.l}</Label>
+            <div
+              className="text-xl font-display font-extrabold"
+              style={{ color: k.c }}
+            >
               {k.v}
             </div>
           </div>
@@ -74,25 +137,43 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-2 gap-3.5">
+      <div className="grid grid-cols-2 gap-5 animate-fade-in-up stagger-2">
         <Card>
-          <Label>RESPONSE TIME per APLIKASI (ms)</Label>
+          <Label>Response Time per Application (ms)</Label>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={rtData} barSize={32}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 9, fill: "var(--color-text-muted)" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 9, fill: "var(--color-text-muted)" }} tickFormatter={(v: number) => `${v}ms`} axisLine={false} tickLine={false} />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--color-border)"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 10, fill: "var(--color-text-muted)" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 10, fill: "var(--color-text-muted)" }}
+                tickFormatter={(v: number) => `${v}ms`}
+                axisLine={false}
+                tickLine={false}
+              />
               <Tooltip content={<ChartTooltip unit="ms" />} />
               <ReferenceLine
                 y={500}
-                stroke="#D97706"
+                stroke="var(--color-amber)"
                 strokeDasharray="4 3"
                 strokeWidth={1}
-                label={{ value: "500ms SLA", fill: "#D97706", fontSize: 9 }}
+                label={{
+                  value: "500ms SLA",
+                  fill: "var(--color-amber)",
+                  fontSize: 10,
+                }}
               />
-              <Bar dataKey="ms" radius={[5, 5, 0, 0]} name="Response time">
+              <Bar dataKey="ms" radius={[4, 4, 0, 0]} name="Response time">
                 {rtData.map((d, i) => (
-                  <Cell key={i} fill={d.fill + "cc"} />
+                  <Cell key={i} fill={rtColor(d.ms)} fillOpacity={0.7} />
                 ))}
               </Bar>
             </BarChart>
@@ -100,114 +181,146 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
         </Card>
 
         <Card>
-          <Label>UX HEALTH SCORE per APLIKASI</Label>
-          <div className="flex flex-col gap-2 mt-2.5">
+          <Label>UX Health Score per Application</Label>
+          <div className="flex flex-col gap-2.5 mt-3">
             {[...enriched]
               .sort((a, b) => b.app.ux.score - a.app.ux.score)
-              .map((e) => {
-                const c = uxColor(e.app.ux.score);
-                return (
-                  <div
-                    key={e.app.id}
-                    onClick={() => onSelect(e.app)}
-                    className="flex gap-2.5 items-center cursor-pointer"
-                  >
-                    <span className="text-[11px] text-txt font-medium min-w-[100px]">
-                      {e.app.shortName}
-                    </span>
-                    <div className="flex-1 bg-surface-dim rounded h-2">
-                      <div
-                        className="h-full rounded transition-[width] duration-500"
-                        style={{ background: c, width: `${e.app.ux.score}%` }}
-                      />
-                    </div>
-                    <span
-                      className="text-[11px] font-mono font-bold min-w-[30px] text-right"
-                      style={{ color: c }}
-                    >
-                      {e.app.ux.score}
-                    </span>
+              .map((e) => (
+                <div
+                  key={e.app.id}
+                  onClick={() => onSelect(e.app)}
+                  onKeyDown={(ev) => {
+                    if (ev.key === "Enter" || ev.key === " ") {
+                      ev.preventDefault();
+                      onSelect(e.app);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  className="flex gap-3 items-center cursor-pointer group focus-visible:outline-2 focus-visible:outline-brand/40 rounded"
+                >
+                  <span className="text-xs text-txt font-medium min-w-[100px] group-hover:text-brand transition-colors">
+                    {e.app.shortName}
+                  </span>
+                  <div className="flex-1 bg-surface-dim rounded-full h-2">
+                    <div
+                      className="h-full rounded-full transition-[width] duration-500"
+                      style={{
+                        background: uxColor(e.app.ux.score),
+                        width: `${e.app.ux.score}%`,
+                        opacity: 0.75,
+                      }}
+                    />
                   </div>
-                );
-              })}
+                  <span
+                    className="text-xs font-mono font-semibold min-w-[30px] text-right tabular-nums"
+                    style={{ color: uxColor(e.app.ux.score) }}
+                  >
+                    {e.app.ux.score}
+                  </span>
+                </div>
+              ))}
           </div>
         </Card>
       </div>
 
       {/* App detail table */}
-      <Card className="!p-0 overflow-hidden">
-        <div className="px-4 py-3 border-b border-border bg-brand-light">
-          <Label color="#CC1122">SEMUA APLIKASI — LIVE STATUS</Label>
+      <Card className="!p-0 overflow-hidden animate-fade-in-up stagger-3">
+        <div className="px-5 py-3 border-b border-border">
+          <Label>All Applications — Live Status</Label>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-[11px]">
+          <table className="w-full border-collapse text-xs">
             <thead>
-              <tr className="border-b border-border bg-surface-dim">
-                {["Aplikasi", "Type", "MAU", "Response", "Uptime", "ROI", "Budget", "UX", ""].map(
-                  (h, i) => (
-                    <th
-                      key={i}
-                      className="px-3.5 py-2 text-left text-txt-dim font-semibold font-mono text-[9px] tracking-[0.1em] whitespace-nowrap"
-                    >
-                      {h}
-                    </th>
-                  ),
-                )}
+              <tr className="border-b border-border bg-surface-dim/50">
+                {columns.map((col, i) => (
+                  <th
+                    key={i}
+                    onClick={
+                      col.sortable && col.key
+                        ? () => handleSort(col.key as SortKey)
+                        : undefined
+                    }
+                    className={`px-4 py-2.5 text-left text-txt-dim font-semibold font-display text-[11px] tracking-[0.04em] whitespace-nowrap ${
+                      col.sortable ? "cursor-pointer hover:text-txt select-none" : ""
+                    }`}
+                  >
+                    {col.label}
+                    {col.sortable && col.key ? sortIndicator(col.key as SortKey) : ""}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {enriched.map((e) => (
+              {sorted.map((e) => (
                 <tr
                   key={e.app.id}
                   onClick={() => onSelect(e.app)}
-                  className="border-b border-border cursor-pointer transition-colors hover:bg-brand-light"
+                  onKeyDown={(ev) => {
+                    if (ev.key === "Enter" || ev.key === " ") {
+                      ev.preventDefault();
+                      onSelect(e.app);
+                    }
+                  }}
+                  tabIndex={0}
+                  className="border-b border-border cursor-pointer transition-colors hover:bg-brand-light/30 focus-visible:bg-brand-light/30 focus-visible:outline-none"
                 >
-                  <td className="px-3.5 py-2.5 text-txt font-semibold">{e.app.name}</td>
-                  <td className="px-3.5 py-2.5 text-txt-muted">{e.app.type}</td>
-                  <td className="px-3.5 py-2.5 text-txt font-mono">
+                  <td className="px-4 py-3 text-txt font-semibold">
+                    {e.app.name}
+                  </td>
+                  <td className="px-4 py-3 text-txt-muted">{e.app.type}</td>
+                  <td className="px-4 py-3 text-txt font-mono tabular-nums">
                     {e.app.metrics.mau.toLocaleString()}
                   </td>
                   <td
-                    className="px-3.5 py-2.5 font-mono font-bold"
+                    className="px-4 py-3 font-mono font-semibold tabular-nums"
                     style={{ color: rtColor(e.app.metrics.responseMs) }}
                   >
                     {e.app.metrics.responseMs}ms
                   </td>
                   <td
-                    className="px-3.5 py-2.5 font-mono font-bold"
-                    style={{ color: e.app.metrics.uptime < 99 ? "#DC2626" : "#059669" }}
+                    className="px-4 py-3 font-mono font-semibold tabular-nums"
+                    style={{
+                      color:
+                        e.app.metrics.uptime < 99
+                          ? "var(--color-red)"
+                          : "var(--color-green)",
+                    }}
                   >
                     {e.app.metrics.uptime}%
                   </td>
-                  <td className="px-3.5 py-2.5">
+                  <td className="px-4 py-3">
                     <Badge color={e.roi.color} bg={e.roi.bg}>
                       {e.roi.pct}%
                     </Badge>
                   </td>
-                  <td className="px-3.5 py-2.5">
+                  <td className="px-4 py-3">
                     <Pill
                       label={e.budget.level}
                       color={e.budget.levelColor}
-                      bg={e.budget.levelColor + "18"}
+                      bg={`color-mix(in oklch, ${e.budget.levelColor} 10%, transparent)`}
                     />
                   </td>
-                  <td className="px-3.5 py-2.5">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-11 bg-surface-dim rounded-sm h-1.5">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-12 bg-surface-dim rounded-full h-1.5">
                         <div
-                          className="h-full rounded-sm"
+                          className="h-full rounded-full"
                           style={{
                             background: uxColor(e.app.ux.score),
                             width: `${e.app.ux.score}%`,
+                            opacity: 0.75,
                           }}
                         />
                       </div>
-                      <span className="text-txt-muted font-mono text-[10px] font-semibold">
+                      <span className="text-txt-muted font-mono text-[11px] font-semibold tabular-nums">
                         {e.app.ux.score}
                       </span>
                     </div>
                   </td>
-                  <td className="px-3.5 py-2.5 text-brand text-sm font-bold">&rarr;</td>
+                  <td className="px-4 py-3 text-txt-dim text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                    &rarr;
+                  </td>
                 </tr>
               ))}
             </tbody>

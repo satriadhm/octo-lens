@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { App, ROIResult, BudgetResult } from "@/app/lib/types";
 import { Badge, Pill } from "@/app/components/shared/Card";
 import { OverviewTab } from "./OverviewTab";
@@ -20,17 +20,41 @@ type TabId = (typeof TABS)[number];
 
 export function DetailDrawer({ app, roi, budget, onClose }: DetailDrawerProps) {
   const [tab, setTab] = useState<TabId>("overview");
-  const uxColor = app.ux.score >= 70 ? "#059669" : app.ux.score >= 50 ? "#D97706" : "#DC2626";
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const uxColor =
+    app.ux.score >= 70
+      ? "var(--color-green)"
+      : app.ux.score >= 50
+        ? "var(--color-amber)"
+        : "var(--color-red)";
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    },
+    [onClose],
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    drawerRef.current?.focus();
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   return (
-    <div className="fixed top-0 right-0 bottom-0 w-[440px] bg-surface border-l-2 border-border flex flex-col z-[100] shadow-[-4px_0_24px_rgba(0,0,0,0.10)] animate-slide-in">
+    <div
+      ref={drawerRef}
+      tabIndex={-1}
+      role="dialog"
+      aria-label={`${app.name} details`}
+      className="fixed top-0 right-0 bottom-0 w-[460px] bg-surface border-l border-border flex flex-col z-[100] shadow-[-4px_0_20px_rgba(0,0,0,0.06)] animate-slide-in outline-none"
+    >
       {/* Drawer header */}
-      <div
-        className="px-[18px] py-3.5 border-b border-border flex justify-between items-start bg-brand-light"
-        style={{ borderTop: "3px solid #CC1122" }}
-      >
+      <div className="px-5 py-4 border-b border-border flex justify-between items-start bg-surface">
         <div>
-          <div className="text-[15px] font-bold text-txt mb-1">{app.name}</div>
+          <h2 className="text-base font-display font-bold text-txt mb-1.5">
+            {app.name}
+          </h2>
           <div className="flex gap-1.5">
             <Badge color={roi.color} bg={roi.bg}>
               {roi.label}
@@ -38,29 +62,36 @@ export function DetailDrawer({ app, roi, budget, onClose }: DetailDrawerProps) {
             <Pill
               label={budget.level}
               color={budget.levelColor}
-              bg={budget.levelColor + "18"}
+              bg={`color-mix(in oklch, ${budget.levelColor} 10%, transparent)`}
             />
-            <Pill label={`UX ${app.ux.score}`} color={uxColor} bg={uxColor + "18"} />
+            <Pill
+              label={`UX ${app.ux.score}`}
+              color={uxColor}
+              bg={`color-mix(in oklch, ${uxColor} 10%, transparent)`}
+            />
           </div>
         </div>
         <button
           onClick={onClose}
-          className="bg-surface-dim border border-border text-txt-muted cursor-pointer text-base leading-none px-2 py-1 rounded-md font-bold hover:bg-border transition-colors"
+          aria-label="Close detail panel"
+          className="bg-surface-dim border border-border text-txt-muted cursor-pointer text-sm leading-none px-2 py-1 rounded-md font-medium hover:bg-border transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
         >
           &#10005;
         </button>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-border bg-surface">
+      <div className="flex border-b border-border bg-surface" role="tablist">
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 bg-transparent border-none py-2.5 px-1 cursor-pointer text-[10px] font-mono tracking-[0.06em] capitalize transition-colors ${
+            role="tab"
+            aria-selected={tab === t}
+            className={`flex-1 bg-transparent border-none py-3 px-1 cursor-pointer text-[11px] font-display font-medium tracking-[0.04em] capitalize transition-colors ${
               tab === t
-                ? "text-brand font-bold border-b-[3px] border-b-brand"
-                : "text-txt-muted font-normal border-b-[3px] border-b-transparent"
+                ? "text-brand border-b-2 border-b-brand"
+                : "text-txt-muted border-b-2 border-b-transparent hover:text-txt"
             }`}
           >
             {t}
@@ -69,7 +100,7 @@ export function DetailDrawer({ app, roi, budget, onClose }: DetailDrawerProps) {
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 overflow-y-auto p-4 bg-background">
+      <div className="flex-1 overflow-y-auto p-5 bg-background">
         {tab === "overview" && <OverviewTab app={app} roi={roi} />}
         {tab === "budget" && <BudgetTab budget={budget} />}
         {tab === "ux" && <UXTab app={app} />}

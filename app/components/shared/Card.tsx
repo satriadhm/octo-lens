@@ -7,16 +7,42 @@ interface CardProps {
   className?: string;
   style?: CSSProperties;
   onClick?: () => void;
+  variant?: "surface" | "bordered" | "interactive";
 }
 
-export function Card({ children, className = "", style, onClick }: CardProps) {
+export function Card({
+  children,
+  className = "",
+  style,
+  onClick,
+  variant = "bordered",
+}: CardProps) {
+  const base = "rounded-xl transition-all duration-150";
+  const variants = {
+    surface: `${base} bg-surface-dim/50 p-4`,
+    bordered: `${base} bg-surface border border-border p-4`,
+    interactive: `${base} bg-surface border border-border p-4 cursor-pointer
+      hover:border-brand/30 hover:bg-brand-light/30
+      focus-visible:outline-2 focus-visible:outline-brand/40 focus-visible:outline-offset-2`,
+  };
+
   return (
     <div
       onClick={onClick}
-      className={`bg-surface border border-border rounded-xl p-3.5 shadow-sm
-        ${onClick ? "cursor-pointer hover:border-brand hover:shadow-[0_2px_10px_rgba(204,17,34,0.10)]" : ""}
-        transition-all duration-150 ${className}`}
+      className={`${variants[onClick ? "interactive" : variant]} ${className}`}
       style={style}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
     >
       {children}
     </div>
@@ -31,7 +57,7 @@ interface LabelProps {
 export function Label({ children, color }: LabelProps) {
   return (
     <div
-      className="font-mono text-[9px] tracking-[0.15em] mb-1.5 uppercase"
+      className="text-[11px] font-semibold tracking-[0.06em] mb-1.5 uppercase font-display"
       style={{ color: color ?? "var(--color-text-dim)" }}
     >
       {children}
@@ -48,8 +74,8 @@ interface BadgeProps {
 export function Badge({ children, color, bg }: BadgeProps) {
   return (
     <span
-      className="text-[10px] font-bold rounded-[5px] px-2 py-0.5"
-      style={{ color, background: bg, border: `1px solid ${color}30` }}
+      className="text-[11px] font-semibold rounded-md px-2 py-0.5 font-sans"
+      style={{ color, background: bg, border: `1px solid ${color}20` }}
     >
       {children}
     </span>
@@ -65,8 +91,8 @@ interface PillProps {
 export function Pill({ label, color, bg }: PillProps) {
   return (
     <span
-      className="text-[9px] font-mono tracking-[0.05em] rounded-full px-2 py-0.5"
-      style={{ color, background: bg, border: `1px solid ${color}25` }}
+      className="text-[10px] font-medium tracking-[0.03em] rounded-full px-2.5 py-0.5 font-sans"
+      style={{ color, background: bg, border: `1px solid ${color}18` }}
     >
       {label}
     </span>
