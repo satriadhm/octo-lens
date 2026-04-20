@@ -89,70 +89,121 @@ function downloadCsv(filename: string, csv: string): void {
   URL.revokeObjectURL(url);
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+async function loadPdfDeps(): Promise<{
+  jsPDF: new (options: {
+    orientation: "landscape" | "portrait";
+    unit: "pt" | "mm" | "cm" | "in";
+    format: string;
+  }) => {
+    setFontSize: (size: number) => void;
+    text: (text: string, x: number, y: number) => void;
+    setTextColor: (gray: number) => void;
+    save: (filename: string) => void;
+  };
+  autoTable: (
+    doc: {
+      setFontSize: (size: number) => void;
+      text: (text: string, x: number, y: number) => void;
+      setTextColor: (gray: number) => void;
+      save: (filename: string) => void;
+    },
+    options: {
+      head: string[][];
+      body: string[][];
+      startY: number;
+      styles: { fontSize: number; cellPadding: number; overflow: "linebreak" };
+      headStyles: {
+        fillColor: [number, number, number];
+        textColor: [number, number, number];
+        fontStyle: "bold";
+      };
+      margin: { top: number; left: number; right: number; bottom: number };
+    },
+  ) => void;
+}> {
+  // Load PDF dependencies lazily in browser runtime.
+  const runtimeImport = new Function("m", "return import(m)") as (
+    moduleName: string,
+  ) => Promise<{ default?: unknown; jsPDF?: unknown }>;
+  const [jspdfMod, autoTableMod] = await Promise.all([
+    runtimeImport("jspdf"),
+    runtimeImport("jspdf-autotable"),
+  ]);
+
+  return {
+    jsPDF: jspdfMod.jsPDF as new (options: {
+      orientation: "landscape" | "portrait";
+      unit: "pt" | "mm" | "cm" | "in";
+      format: string;
+    }) => {
+      setFontSize: (size: number) => void;
+      text: (text: string, x: number, y: number) => void;
+      setTextColor: (gray: number) => void;
+      save: (filename: string) => void;
+    },
+    autoTable: autoTableMod.default as (
+      doc: {
+        setFontSize: (size: number) => void;
+        text: (text: string, x: number, y: number) => void;
+        setTextColor: (gray: number) => void;
+        save: (filename: string) => void;
+      },
+      options: {
+        head: string[][];
+        body: string[][];
+        startY: number;
+        styles: { fontSize: number; cellPadding: number; overflow: "linebreak" };
+        headStyles: {
+          fillColor: [number, number, number];
+          textColor: [number, number, number];
+          fontStyle: "bold";
+        };
+        margin: { top: number; left: number; right: number; bottom: number };
+      },
+    ) => void,
+  };
 }
 
-function exportPrintableReport(
+async function exportPdfReport(
   title: string,
   filenamePrefix: string,
   rows: ExportRow[],
-): void {
-  const popup = window.open("", "_blank", "noopener,noreferrer,width=1100,height=760");
-  if (!popup) return;
-
+): Promise<void> {
+  const { jsPDF, autoTable } = await loadPdfDeps();
   const header = rows[0] ?? [];
   const body = rows.slice(1);
-  const tableHead = header.map((cell) => `<th>${escapeHtml(String(cell))}</th>`).join("");
-  const tableBody = body
-    .map(
-      (row) =>
-        `<tr>${row.map((cell) => `<td>${escapeHtml(String(cell))}</td>`).join("")}</tr>`,
-    )
-    .join("");
+  const doc = new jsPDF({
+    orientation: "landscape",
+    unit: "pt",
+    format: "a4",
+  });
 
-  popup.document.write(`<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>${escapeHtml(title)}</title>
-  <style>
-    :root { color-scheme: light; }
-    body { font-family: Arial, Helvetica, sans-serif; margin: 24px; color: #111827; }
-    h1 { margin: 0 0 8px; font-size: 20px; }
-    p { margin: 0 0 16px; color: #4b5563; font-size: 12px; }
-    table { width: 100%; border-collapse: collapse; font-size: 11px; }
-    th, td { border: 1px solid #d1d5db; text-align: left; padding: 6px 8px; vertical-align: top; }
-    th { background: #f3f4f6; font-weight: 700; }
-    tr:nth-child(even) td { background: #f9fafb; }
-    @media print {
-      body { margin: 12mm; }
-      button { display: none; }
-      thead { display: table-header-group; }
-      tr { break-inside: avoid; page-break-inside: avoid; }
-    }
-  </style>
-</head>
-<body>
-  <h1>${escapeHtml(title)}</h1>
-  <p>Generated at ${escapeHtml(new Date().toLocaleString())}</p>
-  <table>
-    <thead><tr>${tableHead}</tr></thead>
-    <tbody>${tableBody}</tbody>
-  </table>
-  <script>
-    document.title = "${escapeHtml(filenamePrefix)}-${dateSuffix()}.pdf";
-    window.focus();
-    window.print();
-  </script>
-</body>
-</html>`);
-  popup.document.close();
+  doc.setFontSize(16);
+  doc.text(title, 40, 40);
+
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(`Generated at ${new Date().toLocaleString()}`, 40, 58);
+  doc.setTextColor(0);
+
+  autoTable(doc, {
+    head: [header.map((cell) => String(cell))],
+    body: body.map((row) => row.map((cell) => String(cell))),
+    startY: 72,
+    styles: {
+      fontSize: 9,
+      cellPadding: 4,
+      overflow: "linebreak",
+    },
+    headStyles: {
+      fillColor: [243, 244, 246],
+      textColor: [17, 24, 39],
+      fontStyle: "bold",
+    },
+    margin: { top: 72, left: 40, right: 40, bottom: 32 },
+  });
+
+  doc.save(`${filenamePrefix}-${dateSuffix()}.pdf`);
 }
 
 export function exportExecutiveCSV(enriched: EnrichedApp[]): void {
@@ -168,13 +219,9 @@ export function exportOpsCSV(enriched: EnrichedApp[]): void {
 }
 
 export function exportExecutivePDF(enriched: EnrichedApp[]): void {
-  exportPrintableReport(
-    "Octo Lens - Executive Report",
-    "octolens-executive",
-    executiveRows(enriched),
-  );
+  void exportPdfReport("Octo Lens - Executive Report", "octolens-executive", executiveRows(enriched));
 }
 
 export function exportOpsPDF(enriched: EnrichedApp[]): void {
-  exportPrintableReport("Octo Lens - Ops Report", "octolens-ops", opsRows(enriched));
+  void exportPdfReport("Octo Lens - Ops Report", "octolens-ops", opsRows(enriched));
 }
