@@ -2,7 +2,8 @@
 
 import type { App, EnrichedApp } from "@/app/lib/types";
 import { Card, Label, Pill } from "@/app/components/shared/Card";
-import { exportExecutiveCSV } from "@/app/lib/csv";
+import { ExportMenu } from "@/app/components/shared/ExportMenu";
+import { exportExecutiveCSV, exportExecutivePDF } from "@/app/lib/csv";
 import { BudgetBar } from "./BudgetBar";
 import { AISummary } from "./AISummary";
 import { BudgetCard } from "./BudgetCard";
@@ -107,15 +108,10 @@ export function ExecutiveView({
             </span>
           </p>
         </div>
-        <button
-          onClick={() => exportExecutiveCSV(enriched)}
-          className="bg-surface border border-border rounded-lg px-3 py-2 text-xs font-semibold text-txt cursor-pointer transition-colors hover:border-brand/30 hover:bg-brand-light/30 focus-visible:outline-2 focus-visible:outline-brand/40"
-        >
-          <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden="true">&#11015;</span>
-            Export CSV
-          </span>
-        </button>
+        <ExportMenu
+          onExportCSV={() => exportExecutiveCSV(enriched)}
+          onExportPDF={() => exportExecutivePDF(enriched)}
+        />
       </div>
 
       {/* KPI strip — 3 items with varied emphasis */}

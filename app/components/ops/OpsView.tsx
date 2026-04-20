@@ -15,7 +15,8 @@ import {
 import type { App, EnrichedApp } from "@/app/lib/types";
 import { Card, Label, Badge, Pill } from "@/app/components/shared/Card";
 import { ChartTooltip } from "@/app/components/shared/ChartTooltip";
-import { exportOpsCSV } from "@/app/lib/csv";
+import { ExportMenu } from "@/app/components/shared/ExportMenu";
+import { exportOpsCSV, exportOpsPDF } from "@/app/lib/csv";
 
 interface OpsViewProps {
   enriched: EnrichedApp[];
@@ -119,15 +120,10 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
             Real-time application health and performance metrics
           </p>
         </div>
-        <button
-          onClick={() => exportOpsCSV(enriched)}
-          className="bg-surface border border-border rounded-lg px-3 py-2 text-xs font-semibold text-txt cursor-pointer transition-colors hover:border-brand/30 hover:bg-brand-light/30 focus-visible:outline-2 focus-visible:outline-brand/40"
-        >
-          <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden="true">&#11015;</span>
-            Export CSV
-          </span>
-        </button>
+        <ExportMenu
+          onExportCSV={() => exportOpsCSV(enriched)}
+          onExportPDF={() => exportOpsPDF(enriched)}
+        />
       </div>
 
       {/* Ops KPI */}
