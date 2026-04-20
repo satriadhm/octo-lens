@@ -11,6 +11,9 @@ function normalize(value: number, min: number, max: number) {
 
 export function UsageHeatmap({ values }: UsageHeatmapProps) {
   const list = values.slice(0, 70);
+  if (list.length === 0) {
+    return <div className="mt-2 text-xs text-txt-dim">No activity data.</div>;
+  }
   const min = Math.min(...list);
   const max = Math.max(...list);
 

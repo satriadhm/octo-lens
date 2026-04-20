@@ -73,12 +73,18 @@ function actionTone(action: "http" | "file-transfer" | "db") {
 
 function PaginationStub() {
   return (
-    <div className="flex items-center justify-end gap-2 px-4 py-2 text-[11px] text-txt-dim">
-      <button className="h-6 w-6 rounded border border-border hover:bg-surface-dim" type="button">
+    <div className="flex items-center justify-end gap-2 px-4 py-2.5 text-[11px] text-txt-dim">
+      <button
+        className="h-7 w-7 rounded-md border border-border hover:bg-surface-dim transition-colors"
+        type="button"
+      >
         {"<"}
       </button>
-      <span className="h-6 min-w-6 px-2 rounded bg-brand text-white grid place-items-center">1</span>
-      <button className="h-6 w-6 rounded border border-border hover:bg-surface-dim" type="button">
+      <span className="h-7 min-w-7 px-2 rounded-md bg-brand text-white grid place-items-center">1</span>
+      <button
+        className="h-7 w-7 rounded-md border border-border hover:bg-surface-dim transition-colors"
+        type="button"
+      >
         {">"}
       </button>
     </div>
@@ -117,7 +123,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
 
   const kpis = [
     { l: "Avg Response", v: `${avgResponse}ms`, c: "var(--color-blue)" },
-    { l: "Total Requests", v: totalRequests.toLocaleString(), c: "var(--color-indigo)" },
+    { l: "Total Requests", v: totalRequests.toLocaleString(), c: "var(--color-blue)" },
     { l: "Error Rate", v: `${weightedErrorRate.toFixed(2)}%`, c: "var(--color-red)" },
     { l: "P95 Portfolio", v: `${portfolioP95}ms`, c: "var(--color-amber)" },
     { l: "Min Uptime", v: `${minUptime}%`, c: "var(--color-orange)" },
@@ -243,11 +249,11 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
   ];
 
   return (
-    <div className="p-6 flex flex-col gap-6 overflow-y-auto h-full max-w-[1400px] mx-auto w-full">
+    <div className="px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7 flex flex-col gap-7 overflow-y-auto h-full max-w-[1600px] mx-auto w-full">
       {/* Narrative */}
-      <div className="animate-fade-in-up relative z-[110] flex items-start justify-between gap-4">
+      <div className="animate-fade-in-up relative z-[110] flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-display font-bold text-txt mb-1">
+          <h1 className="text-xl sm:text-2xl font-display font-bold text-txt mb-1">
             Operations Dashboard
           </h1>
           <p className="text-sm text-txt-muted">
@@ -261,15 +267,15 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       </div>
 
       {/* Ops KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 animate-fade-in-up stagger-1">
+      <div className="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-3 sm:gap-4 animate-fade-in-up stagger-1">
         {kpis.map((k, i) => (
           <div
             key={i}
-            className="bg-surface rounded-xl px-5 py-4 border border-border"
+            className="bg-surface rounded-xl px-4 sm:px-5 py-3.5 sm:py-4 border border-border min-h-[88px] flex flex-col justify-center"
           >
             <Label>{k.l}</Label>
             <div
-              className="text-xl font-display font-extrabold"
+              className="text-lg sm:text-xl font-display font-extrabold"
               style={{ color: k.c }}
             >
               {k.v}
@@ -279,7 +285,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-2 gap-5 animate-fade-in-up stagger-2">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-2">
         <Card>
           <Label>Response Time per Application (ms)</Label>
           <ResponsiveContainer width="100%" height={200}>
@@ -474,14 +480,14 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       </Card>
 
       {/* Latency hotspots */}
-      <div className="grid grid-cols-2 gap-5 animate-fade-in-up stagger-4">
+      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-4">
         <Card className="relative !p-0 overflow-hidden">
           <SourceTag source="/trace/p95-endpoint" />
           <div className="px-5 py-3 border-b border-border">
             <Label>Top Endpoint P95</Label>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
+            <table className="w-full min-w-[640px] border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-surface-dim/50">
                   <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Method</th>
@@ -518,7 +524,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
             <Label>Top Service P95</Label>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
+            <table className="w-full min-w-[520px] border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-surface-dim/50">
                   <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Application</th>
@@ -552,7 +558,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       </div>
 
       {/* P95 trend + heatmap */}
-      <div className="grid grid-cols-2 gap-5 animate-fade-in-up stagger-5">
+      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-5">
         <Card className="relative">
           <SourceTag source="/trace/p95-hourly" />
           <Label>P95 API Hourly</Label>
@@ -584,19 +590,21 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
         <Card className="relative">
           <SourceTag source="/custom-telemetry/group-usage" />
           <Label>Group Usage Heatmap</Label>
-          <UsageHeatmap values={usageHeatmap} />
+          <div className="mt-1">
+            <UsageHeatmap values={usageHeatmap} />
+          </div>
         </Card>
       </div>
 
       {/* Slow query / slow endpoint */}
-      <div className="grid grid-cols-2 gap-5 animate-fade-in-up stagger-6">
+      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-6">
         <Card className="relative !p-0 overflow-hidden">
           <SourceTag source="/custom-telemetry/slow-query" />
           <div className="px-5 py-3 border-b border-border">
             <Label>Slow Query (above 500 ms, limit 25)</Label>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
+            <table className="w-full min-w-[760px] border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-surface-dim/50">
                   <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Action</th>
@@ -633,7 +641,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
             <Label>Slow Endpoint (above 500 ms, limit 25)</Label>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
+            <table className="w-full min-w-[980px] border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-surface-dim/50">
                   <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Method</th>
@@ -671,14 +679,14 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       </div>
 
       {/* Top users / monthly usage */}
-      <div className="grid grid-cols-2 gap-5 animate-fade-in-up stagger-7">
+      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-7">
         <Card className="relative !p-0 overflow-hidden">
           <SourceTag source="/custom-telemetry/top-users" />
           <div className="px-5 py-3 border-b border-border">
             <Label>Top Users</Label>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
+            <table className="w-full min-w-[760px] border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-surface-dim/50">
                   <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">User</th>
@@ -712,7 +720,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
             <Label>Monthly Usage by Team</Label>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
+            <table className="w-full min-w-[980px] border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-surface-dim/50">
                   <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Month Year</th>
