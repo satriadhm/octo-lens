@@ -14,6 +14,17 @@ export interface AppMetrics {
   responseMs: number;
   uptime: number;
   lastMonthRoi: number;
+  p50Ms?: number;
+  p95Ms?: number;
+  p99Ms?: number;
+  errorRate?: number;
+  totalRequests?: number;
+  requestBytes?: number;
+  uniqueUsers?: number;
+  tokenIn?: number;
+  tokenOut?: number;
+  hourlyP95?: { h: string; p95: number; hits: number }[];
+  dailyActivity?: number[];
 }
 
 export interface AppBudget {
@@ -41,6 +52,10 @@ export interface ApiEndpoint {
   path: string;
   calls: number;
   adoption: number;
+  method?: "GET" | "POST" | "PUT" | "DELETE";
+  p95Ms?: number;
+  errorRate?: number;
+  status?: number;
 }
 
 export interface AppApi {
@@ -107,3 +122,20 @@ export interface EnrichedApp {
 }
 
 export type ViewMode = "executive" | "ops";
+
+export interface SlowQuery {
+  action: "http" | "file-transfer" | "db";
+  durationMs: number;
+  group: string;
+  createdAt: string;
+  endpoint: string;
+}
+
+export interface TopUser {
+  user: string;
+  group: string;
+  totalReq: number;
+  avgResMs: number;
+  totalFiles?: number;
+  totalFileSize?: number;
+}

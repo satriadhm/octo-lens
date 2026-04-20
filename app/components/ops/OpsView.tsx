@@ -4,6 +4,8 @@ import { useState } from "react";
 import {
   BarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -17,6 +19,11 @@ import { Card, Label, Badge, Pill } from "@/app/components/shared/Card";
 import { ChartTooltip } from "@/app/components/shared/ChartTooltip";
 import { ExportMenu } from "@/app/components/shared/ExportMenu";
 import { exportOpsCSV, exportOpsPDF } from "@/app/lib/csv";
+import { SLOW_QUERIES, TOP_USERS } from "@/app/lib/data";
+import { MethodBadge } from "@/app/components/shared/MethodBadge";
+import { StatusBadge } from "@/app/components/shared/StatusBadge";
+import { SourceTag } from "@/app/components/shared/SourceTag";
+import { UsageHeatmap } from "@/app/components/ops/UsageHeatmap";
 
 interface OpsViewProps {
   enriched: EnrichedApp[];
@@ -38,6 +45,46 @@ function uxColor(score: number) {
 type SortKey = "name" | "mau" | "response" | "uptime" | "budgetPct" | "ux";
 type SortDir = "asc" | "desc";
 
+function formatBytes(bytes: number | undefined): string {
+  if (!bytes) return "-";
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MiB`;
+  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KiB`;
+  return `${bytes} B`;
+}
+
+function actionTone(action: "http" | "file-transfer" | "db") {
+  if (action === "db") {
+    return {
+      color: "var(--color-amber)",
+      bg: "color-mix(in oklch, var(--color-amber) 12%, transparent)",
+    };
+  }
+  if (action === "file-transfer") {
+    return {
+      color: "var(--color-blue)",
+      bg: "color-mix(in oklch, var(--color-blue) 12%, transparent)",
+    };
+  }
+  return {
+    color: "var(--color-green)",
+    bg: "color-mix(in oklch, var(--color-green) 12%, transparent)",
+  };
+}
+
+function PaginationStub() {
+  return (
+    <div className="flex items-center justify-end gap-2 px-4 py-2 text-[11px] text-txt-dim">
+      <button className="h-6 w-6 rounded border border-border hover:bg-surface-dim" type="button">
+        {"<"}
+      </button>
+      <span className="h-6 min-w-6 px-2 rounded bg-brand text-white grid place-items-center">1</span>
+      <button className="h-6 w-6 rounded border border-border hover:bg-surface-dim" type="button">
+        {">"}
+      </button>
+    </div>
+  );
+}
+
 export function OpsView({ enriched, onSelect }: OpsViewProps) {
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -51,18 +98,105 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
     enriched.reduce((s, e) => s + e.app.metrics.responseMs, 0) /
       enriched.length,
   );
-  const slowest = [...enriched].sort(
-    (a, b) => b.app.metrics.responseMs - a.app.metrics.responseMs,
-  )[0];
   const minUptime = Math.min(...enriched.map((e) => e.app.metrics.uptime));
   const totalMAU = enriched.reduce((s, e) => s + e.app.metrics.mau, 0);
+  const totalRequests = enriched.reduce(
+    (sum, entry) => sum + (entry.app.metrics.totalRequests ?? entry.app.api.totalReqs),
+    0,
+  );
+  const errorWeighted = enriched.reduce((sum, entry) => {
+    const requests = entry.app.metrics.totalRequests ?? entry.app.api.totalReqs;
+    const errorRate = entry.app.metrics.errorRate ?? 0;
+    return sum + requests * errorRate;
+  }, 0);
+  const weightedErrorRate = totalRequests > 0 ? errorWeighted / totalRequests : 0;
+  const portfolioP95 = Math.round(
+    enriched.reduce((sum, entry) => sum + (entry.app.metrics.p95Ms ?? entry.app.metrics.responseMs), 0) /
+      Math.max(1, enriched.length),
+  );
 
   const kpis = [
     { l: "Avg Response", v: `${avgResponse}ms`, c: "var(--color-blue)" },
-    { l: "Slowest App", v: slowest.app.shortName, c: "var(--color-amber)" },
+    { l: "Total Requests", v: totalRequests.toLocaleString(), c: "var(--color-indigo)" },
+    { l: "Error Rate", v: `${weightedErrorRate.toFixed(2)}%`, c: "var(--color-red)" },
+    { l: "P95 Portfolio", v: `${portfolioP95}ms`, c: "var(--color-amber)" },
     { l: "Min Uptime", v: `${minUptime}%`, c: "var(--color-orange)" },
     { l: "Total MAU", v: totalMAU.toLocaleString(), c: "var(--color-green)" },
   ];
+
+  const endpointLatencyRows = enriched
+    .flatMap((entry) =>
+      entry.app.api.endpoints.map((endpoint) => ({
+        app: entry.app,
+        path: endpoint.path,
+        method: endpoint.method ?? "GET",
+        p95Ms: endpoint.p95Ms ?? entry.app.metrics.p95Ms ?? entry.app.metrics.responseMs,
+        status: endpoint.status ?? 200,
+        calls: endpoint.calls,
+      })),
+    )
+    .sort((a, b) => b.p95Ms - a.p95Ms);
+  const topEndpointP95 = endpointLatencyRows.slice(0, 5);
+  const topServiceP95 = [...enriched]
+    .sort(
+      (a, b) =>
+        (b.app.metrics.p95Ms ?? b.app.metrics.responseMs) -
+        (a.app.metrics.p95Ms ?? a.app.metrics.responseMs),
+    )
+    .slice(0, 5);
+
+  const hourlyAggregate = Array.from({ length: 24 }, (_, idx) => {
+    const hour = `${String(idx).padStart(2, "0")}:00`;
+    const slot = enriched.map((entry) => entry.app.metrics.hourlyP95?.[idx]);
+    const totalHits = slot.reduce((sum, value) => sum + (value?.hits ?? 0), 0);
+    const p95Avg = Math.round(
+      slot.reduce((sum, value) => sum + (value?.p95 ?? 0), 0) / Math.max(1, slot.length),
+    );
+    return { h: hour, p95: p95Avg, hits: totalHits };
+  });
+
+  const usageHeatmap = Array.from({ length: 70 }, (_, idx) =>
+    enriched.reduce((sum, entry) => sum + (entry.app.metrics.dailyActivity?.[idx] ?? 0), 0),
+  );
+
+  const slowEndpoints = endpointLatencyRows
+    .filter((row) => row.p95Ms > 500)
+    .slice(0, 6)
+    .map((row, idx) => ({
+      ...row,
+      createdAt: SLOW_QUERIES[idx % SLOW_QUERIES.length]?.createdAt ?? new Date().toISOString(),
+    }));
+
+  const monthlyUsageByTeam = Object.entries(
+    enriched.reduce<Record<string, { totalReq: number; totalFiles: number; totalFileSize: number; avgRes: number }>>(
+      (acc, entry) => {
+        const team = entry.app.team;
+        const totalReq = entry.app.metrics.totalRequests ?? entry.app.api.totalReqs;
+        const totalFileSize = entry.app.metrics.requestBytes ?? 0;
+        const teamUsers = TOP_USERS.filter((user) => user.group === team);
+        const totalFiles = teamUsers.reduce((sum, user) => sum + (user.totalFiles ?? 0), 0);
+        if (!acc[team]) {
+          acc[team] = { totalReq: 0, totalFiles: 0, totalFileSize: 0, avgRes: 0 };
+        }
+        acc[team].totalReq += totalReq;
+        acc[team].totalFiles += totalFiles;
+        acc[team].totalFileSize += totalFileSize;
+        acc[team].avgRes += entry.app.metrics.responseMs;
+        return acc;
+      },
+      {},
+    ),
+  )
+    .map(([group, value]) => ({
+      month: "April 2026",
+      group,
+      totalReq: value.totalReq,
+      percentage: totalRequests > 0 ? (value.totalReq / totalRequests) * 100 : 0,
+      totalFiles: value.totalFiles,
+      totalFileSize: value.totalFileSize,
+      avgUploadDuration: Math.round(value.avgRes / Math.max(1, enriched.filter((e) => e.app.team === group).length)),
+    }))
+    .sort((a, b) => b.totalReq - a.totalReq);
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {
@@ -127,7 +261,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       </div>
 
       {/* Ops KPI */}
-      <div className="grid grid-cols-4 gap-4 animate-fade-in-up stagger-1">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 animate-fade-in-up stagger-1">
         {kpis.map((k, i) => (
           <div
             key={i}
@@ -338,6 +472,276 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
           </table>
         </div>
       </Card>
+
+      {/* Latency hotspots */}
+      <div className="grid grid-cols-2 gap-5 animate-fade-in-up stagger-4">
+        <Card className="relative !p-0 overflow-hidden">
+          <SourceTag source="/trace/p95-endpoint" />
+          <div className="px-5 py-3 border-b border-border">
+            <Label>Top Endpoint P95</Label>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-border bg-surface-dim/50">
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Method</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Endpoint</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Total Req</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">P95 (ms)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topEndpointP95.map((row) => (
+                  <tr
+                    key={`${row.app.id}-${row.path}`}
+                    className="border-b border-border hover:bg-brand-light/30 cursor-pointer"
+                    onClick={() => onSelect(row.app)}
+                  >
+                    <td className="px-4 py-2.5">
+                      <MethodBadge method={row.method} />
+                    </td>
+                    <td className="px-4 py-2.5 text-txt-muted font-mono">{row.path}</td>
+                    <td className="px-4 py-2.5 tabular-nums">{row.calls.toLocaleString()}</td>
+                    <td className="px-4 py-2.5 tabular-nums font-semibold" style={{ color: rtColor(row.p95Ms) }}>
+                      {row.p95Ms.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        <Card className="relative !p-0 overflow-hidden">
+          <SourceTag source="/trace/p95-service" />
+          <div className="px-5 py-3 border-b border-border">
+            <Label>Top Service P95</Label>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-border bg-surface-dim/50">
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Application</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Total Req</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">P95 (ms)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topServiceP95.map((entry) => (
+                  <tr
+                    key={entry.app.id}
+                    className="border-b border-border hover:bg-brand-light/30 cursor-pointer"
+                    onClick={() => onSelect(entry.app)}
+                  >
+                    <td className="px-4 py-2.5 text-txt">{entry.app.shortName}</td>
+                    <td className="px-4 py-2.5 tabular-nums">
+                      {(entry.app.metrics.totalRequests ?? entry.app.api.totalReqs).toLocaleString()}
+                    </td>
+                    <td
+                      className="px-4 py-2.5 tabular-nums font-semibold"
+                      style={{ color: rtColor(entry.app.metrics.p95Ms ?? entry.app.metrics.responseMs) }}
+                    >
+                      {(entry.app.metrics.p95Ms ?? entry.app.metrics.responseMs).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+
+      {/* P95 trend + heatmap */}
+      <div className="grid grid-cols-2 gap-5 animate-fade-in-up stagger-5">
+        <Card className="relative">
+          <SourceTag source="/trace/p95-hourly" />
+          <Label>P95 API Hourly</Label>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={hourlyAggregate}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+              <XAxis dataKey="h" tick={{ fontSize: 10, fill: "var(--color-text-muted)" }} axisLine={false} tickLine={false} />
+              <YAxis
+                yAxisId="latency"
+                tick={{ fontSize: 10, fill: "var(--color-text-muted)" }}
+                tickFormatter={(value: number) => `${value}ms`}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                yAxisId="hits"
+                orientation="right"
+                tick={{ fontSize: 10, fill: "var(--color-text-muted)" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip content={<ChartTooltip />} />
+              <Line yAxisId="latency" type="monotone" dataKey="p95" stroke="var(--color-blue)" strokeWidth={2} dot={false} />
+              <Line yAxisId="hits" type="monotone" dataKey="hits" stroke="var(--color-red)" strokeWidth={1.8} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </Card>
+
+        <Card className="relative">
+          <SourceTag source="/custom-telemetry/group-usage" />
+          <Label>Group Usage Heatmap</Label>
+          <UsageHeatmap values={usageHeatmap} />
+        </Card>
+      </div>
+
+      {/* Slow query / slow endpoint */}
+      <div className="grid grid-cols-2 gap-5 animate-fade-in-up stagger-6">
+        <Card className="relative !p-0 overflow-hidden">
+          <SourceTag source="/custom-telemetry/slow-query" />
+          <div className="px-5 py-3 border-b border-border">
+            <Label>Slow Query (above 500 ms, limit 25)</Label>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-border bg-surface-dim/50">
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Action</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Duration (ms)</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Group</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Created At</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">End Point</th>
+                </tr>
+              </thead>
+              <tbody>
+                {SLOW_QUERIES.slice(0, 6).map((query) => {
+                  const tone = actionTone(query.action);
+                  return (
+                    <tr key={`${query.endpoint}-${query.createdAt}`} className="border-b border-border">
+                      <td className="px-4 py-2.5">
+                        <Pill label={query.action} color={tone.color} bg={tone.bg} />
+                      </td>
+                      <td className="px-4 py-2.5 tabular-nums font-semibold">{query.durationMs}</td>
+                      <td className="px-4 py-2.5">{query.group}</td>
+                      <td className="px-4 py-2.5 text-txt-muted">{new Date(query.createdAt).toLocaleString()}</td>
+                      <td className="px-4 py-2.5 font-mono text-txt-muted">{query.endpoint}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <PaginationStub />
+        </Card>
+
+        <Card className="relative !p-0 overflow-hidden">
+          <SourceTag source="/custom-telemetry/slow-endpoint" />
+          <div className="px-5 py-3 border-b border-border">
+            <Label>Slow Endpoint (above 500 ms, limit 25)</Label>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-border bg-surface-dim/50">
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Method</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">EndPoint</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Status</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Total Span</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">AppInfo</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Response Time (ms)</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Created At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {slowEndpoints.map((row) => (
+                  <tr key={`${row.app.id}-${row.path}`} className="border-b border-border">
+                    <td className="px-4 py-2.5">
+                      <MethodBadge method={row.method} />
+                    </td>
+                    <td className="px-4 py-2.5 font-mono text-txt-muted">{row.path}</td>
+                    <td className="px-4 py-2.5">
+                      <StatusBadge status={row.status} />
+                    </td>
+                    <td className="px-4 py-2.5 tabular-nums">{Math.round(row.calls / 1000)}</td>
+                    <td className="px-4 py-2.5">{row.app.shortName}</td>
+                    <td className="px-4 py-2.5 tabular-nums font-semibold" style={{ color: rtColor(row.p95Ms) }}>
+                      {row.p95Ms.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-2.5 text-txt-muted">{new Date(row.createdAt).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <PaginationStub />
+        </Card>
+      </div>
+
+      {/* Top users / monthly usage */}
+      <div className="grid grid-cols-2 gap-5 animate-fade-in-up stagger-7">
+        <Card className="relative !p-0 overflow-hidden">
+          <SourceTag source="/custom-telemetry/top-users" />
+          <div className="px-5 py-3 border-b border-border">
+            <Label>Top Users</Label>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-border bg-surface-dim/50">
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">User</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Group</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Total Req</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Avg Res (ms)</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Total Files</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Total File Size</th>
+                </tr>
+              </thead>
+              <tbody>
+                {TOP_USERS.slice(0, 6).map((row, idx) => (
+                  <tr key={`${row.user}-${idx}`} className="border-b border-border">
+                    <td className="px-4 py-2.5 text-txt">{row.user}</td>
+                    <td className="px-4 py-2.5">{row.group}</td>
+                    <td className="px-4 py-2.5 tabular-nums">{row.totalReq.toLocaleString()}</td>
+                    <td className="px-4 py-2.5 tabular-nums">{row.avgResMs.toLocaleString()}</td>
+                    <td className="px-4 py-2.5 tabular-nums">{row.totalFiles ?? "-"}</td>
+                    <td className="px-4 py-2.5">{formatBytes(row.totalFileSize)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <PaginationStub />
+        </Card>
+
+        <Card className="relative !p-0 overflow-hidden">
+          <SourceTag source="/custom-telemetry/group-usage" />
+          <div className="px-5 py-3 border-b border-border">
+            <Label>Monthly Usage by Team</Label>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-border bg-surface-dim/50">
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Month Year</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Group</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Total Request</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Percentage</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Total Files</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Total File Size</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Avg Upload Duration (ms)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthlyUsageByTeam.map((row) => (
+                  <tr key={row.group} className="border-b border-border">
+                    <td className="px-4 py-2.5">{row.month}</td>
+                    <td className="px-4 py-2.5">{row.group}</td>
+                    <td className="px-4 py-2.5 tabular-nums">{row.totalReq.toLocaleString()}</td>
+                    <td className="px-4 py-2.5 tabular-nums">{row.percentage.toFixed(1)}%</td>
+                    <td className="px-4 py-2.5 tabular-nums">{row.totalFiles.toLocaleString()}</td>
+                    <td className="px-4 py-2.5">{formatBytes(row.totalFileSize)}</td>
+                    <td className="px-4 py-2.5 tabular-nums">{row.avgUploadDuration.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <PaginationStub />
+        </Card>
+      </div>
     </div>
   );
 }

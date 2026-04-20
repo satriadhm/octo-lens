@@ -1,4 +1,23 @@
-import type { App } from "./types";
+import type { App, SlowQuery, TopUser } from "./types";
+
+function buildHourlyP95(baseP95: number, baseHits: number) {
+  return Array.from({ length: 24 }, (_, hour) => {
+    const peakWave = Math.sin((hour / 24) * Math.PI * 2);
+    const rushWave = Math.cos(((hour - 9) / 24) * Math.PI * 4);
+    const p95 = Math.max(120, Math.round(baseP95 + peakWave * 110 + rushWave * 40));
+    const hits = Math.max(200, Math.round(baseHits + peakWave * (baseHits * 0.28)));
+    return { h: `${String(hour).padStart(2, "0")}:00`, p95, hits };
+  });
+}
+
+function buildDailyActivity(seed: number) {
+  return Array.from({ length: 70 }, (_, idx) => {
+    const weekFactor = 0.9 + ((idx % 10) / 10) * 0.2;
+    const dayInWeek = idx % 7;
+    const weekdayBoost = dayInWeek === 0 || dayInWeek === 6 ? 0.55 : 1;
+    return Math.max(8, Math.round(seed * weekFactor * weekdayBoost));
+  });
+}
 
 export const APPS: App[] = [
   {
@@ -9,7 +28,23 @@ export const APPS: App[] = [
     type: "Mobile",
     cost: { development: 2500000000, opPerMonth: 150000000, months: 10, total: 4000000000 },
     value: { totalRevenue: 9200000000 },
-    metrics: { mau: 320000, responseMs: 310, uptime: 99.7, lastMonthRoi: 162 },
+    metrics: {
+      mau: 320000,
+      responseMs: 310,
+      uptime: 99.7,
+      lastMonthRoi: 162,
+      p50Ms: 180,
+      p95Ms: 518,
+      p99Ms: 860,
+      errorRate: 1.32,
+      totalRequests: 4018000,
+      requestBytes: 24370000,
+      uniqueUsers: 311200,
+      tokenIn: 6846,
+      tokenOut: 181,
+      hourlyP95: buildHourlyP95(518, 168000),
+      dailyActivity: buildDailyActivity(62),
+    },
     budget: {
       total: 4000000000,
       months: 12,
@@ -34,9 +69,33 @@ export const APPS: App[] = [
     api: {
       totalReqs: 2340000,
       endpoints: [
-        { path: "/transfer/interbank", calls: 450230, adoption: 78 },
-        { path: "/loan/kpr/apply", calls: 1200, adoption: 0.4 },
-        { path: "/investment/reksa", calls: 23400, adoption: 4.1 },
+        {
+          path: "/transfer/interbank",
+          calls: 450230,
+          adoption: 78,
+          method: "POST",
+          p95Ms: 57469.92,
+          errorRate: 1.94,
+          status: 200,
+        },
+        {
+          path: "/loan/kpr/apply",
+          calls: 1200,
+          adoption: 0.4,
+          method: "POST",
+          p95Ms: 634.12,
+          errorRate: 3.11,
+          status: 500,
+        },
+        {
+          path: "/investment/reksa",
+          calls: 23400,
+          adoption: 4.1,
+          method: "GET",
+          p95Ms: 341.8,
+          errorRate: 0.92,
+          status: 200,
+        },
       ],
     },
   },
@@ -48,7 +107,23 @@ export const APPS: App[] = [
     type: "Web",
     cost: { development: 1800000000, opPerMonth: 90000000, months: 14, total: 3060000000 },
     value: { totalRevenue: 5400000000 },
-    metrics: { mau: 89000, responseMs: 520, uptime: 99.1, lastMonthRoi: 74 },
+    metrics: {
+      mau: 89000,
+      responseMs: 520,
+      uptime: 99.1,
+      lastMonthRoi: 74,
+      p50Ms: 262,
+      p95Ms: 599.31,
+      p99Ms: 1082,
+      errorRate: 1.04,
+      totalRequests: 210000,
+      requestBytes: 3040000,
+      uniqueUsers: 84520,
+      tokenIn: 3108,
+      tokenOut: 112,
+      hourlyP95: buildHourlyP95(599, 92000),
+      dailyActivity: buildDailyActivity(44),
+    },
     budget: {
       total: 3000000000,
       months: 14,
@@ -75,9 +150,33 @@ export const APPS: App[] = [
     api: {
       totalReqs: 890000,
       endpoints: [
-        { path: "/transfer/domestic", calls: 189000, adoption: 61 },
-        { path: "/report/statement", calls: 45000, adoption: 14.5 },
-        { path: "/export/csv", calls: 2100, adoption: 0.7 },
+        {
+          path: "/transfer/domestic",
+          calls: 189000,
+          adoption: 61,
+          method: "GET",
+          p95Ms: 599.31,
+          errorRate: 1.2,
+          status: 200,
+        },
+        {
+          path: "/report/statement",
+          calls: 45000,
+          adoption: 14.5,
+          method: "GET",
+          p95Ms: 305.31,
+          errorRate: 0.8,
+          status: 200,
+        },
+        {
+          path: "/export/csv",
+          calls: 2100,
+          adoption: 0.7,
+          method: "GET",
+          p95Ms: 289.29,
+          errorRate: 0.6,
+          status: 200,
+        },
       ],
     },
   },
@@ -89,7 +188,23 @@ export const APPS: App[] = [
     type: "Web",
     cost: { development: 3200000000, opPerMonth: 120000000, months: 8, total: 4160000000 },
     value: { totalRevenue: 2100000000 },
-    metrics: { mau: 12000, responseMs: 980, uptime: 97.3, lastMonthRoi: -47 },
+    metrics: {
+      mau: 12000,
+      responseMs: 980,
+      uptime: 97.3,
+      lastMonthRoi: -47,
+      p50Ms: 480,
+      p95Ms: 1420,
+      p99Ms: 2280,
+      errorRate: 2.84,
+      totalRequests: 48020,
+      requestBytes: 980000,
+      uniqueUsers: 11150,
+      tokenIn: 912,
+      tokenOut: 53,
+      hourlyP95: buildHourlyP95(1420, 3500),
+      dailyActivity: buildDailyActivity(18),
+    },
     budget: {
       total: 4000000000,
       months: 12,
@@ -113,9 +228,33 @@ export const APPS: App[] = [
     api: {
       totalReqs: 48000,
       endpoints: [
-        { path: "/kpr/simulate", calls: 31000, adoption: 65 },
-        { path: "/kpr/apply", calls: 4800, adoption: 10 },
-        { path: "/kpr/document/upload", calls: 2100, adoption: 4.4 },
+        {
+          path: "/kpr/simulate",
+          calls: 31000,
+          adoption: 65,
+          method: "GET",
+          p95Ms: 2172.89,
+          errorRate: 3.62,
+          status: 200,
+        },
+        {
+          path: "/kpr/apply",
+          calls: 4800,
+          adoption: 10,
+          method: "POST",
+          p95Ms: 2793.7,
+          errorRate: 4.11,
+          status: 500,
+        },
+        {
+          path: "/kpr/document/upload",
+          calls: 2100,
+          adoption: 4.4,
+          method: "POST",
+          p95Ms: 2001.46,
+          errorRate: 2.08,
+          status: 200,
+        },
       ],
     },
   },
@@ -127,7 +266,23 @@ export const APPS: App[] = [
     type: "Internal",
     cost: { development: 900000000, opPerMonth: 45000000, months: 24, total: 1980000000 },
     value: { totalRevenue: 4800000000 },
-    metrics: { mau: 1200, responseMs: 410, uptime: 99.9, lastMonthRoi: 139 },
+    metrics: {
+      mau: 1200,
+      responseMs: 410,
+      uptime: 99.9,
+      lastMonthRoi: 139,
+      p50Ms: 220,
+      p95Ms: 482,
+      p99Ms: 911,
+      errorRate: 0.58,
+      totalRequests: 38000,
+      requestBytes: 1800000,
+      uniqueUsers: 1180,
+      tokenIn: 420,
+      tokenOut: 30,
+      hourlyP95: buildHourlyP95(482, 4100),
+      dailyActivity: buildDailyActivity(22),
+    },
     budget: {
       total: 2000000000,
       months: 24,
@@ -153,8 +308,24 @@ export const APPS: App[] = [
     api: {
       totalReqs: 120000,
       endpoints: [
-        { path: "/approval/pending", calls: 45000, adoption: 77 },
-        { path: "/recon/daily", calls: 28000, adoption: 48 },
+        {
+          path: "/approval/pending",
+          calls: 45000,
+          adoption: 77,
+          method: "GET",
+          p95Ms: 438.77,
+          errorRate: 0.5,
+          status: 200,
+        },
+        {
+          path: "/recon/daily",
+          calls: 28000,
+          adoption: 48,
+          method: "GET",
+          p95Ms: 515.12,
+          errorRate: 0.78,
+          status: 200,
+        },
       ],
     },
   },
@@ -166,7 +337,23 @@ export const APPS: App[] = [
     type: "Internal",
     cost: { development: 5800000000, opPerMonth: 280000000, months: 6, total: 7480000000 },
     value: { totalRevenue: 18200000000 },
-    metrics: { mau: 340, responseMs: 220, uptime: 99.99, lastMonthRoi: 138 },
+    metrics: {
+      mau: 340,
+      responseMs: 220,
+      uptime: 99.99,
+      lastMonthRoi: 138,
+      p50Ms: 140,
+      p95Ms: 322.4,
+      p99Ms: 638,
+      errorRate: 0.34,
+      totalRequests: 146000,
+      requestBytes: 3040000,
+      uniqueUsers: 330,
+      tokenIn: 210,
+      tokenOut: 16,
+      hourlyP95: buildHourlyP95(322, 18500),
+      dailyActivity: buildDailyActivity(12),
+    },
     budget: {
       total: 8000000000,
       months: 12,
@@ -189,9 +376,151 @@ export const APPS: App[] = [
     api: {
       totalReqs: 680000,
       endpoints: [
-        { path: "/fx/trade", calls: 245000, adoption: 91 },
-        { path: "/bond/settlement", calls: 189000, adoption: 70 },
+        {
+          path: "/fx/trade",
+          calls: 245000,
+          adoption: 91,
+          method: "POST",
+          p95Ms: 518.73,
+          errorRate: 0.41,
+          status: 200,
+        },
+        {
+          path: "/bond/settlement",
+          calls: 189000,
+          adoption: 70,
+          method: "POST",
+          p95Ms: 246.31,
+          errorRate: 0.22,
+          status: 200,
+        },
       ],
     },
+  },
+];
+
+export const SLOW_QUERIES: SlowQuery[] = [
+  {
+    action: "http",
+    durationMs: 638,
+    group: "Testing Migration",
+    createdAt: "2026-04-20T14:55:25.000Z",
+    endpoint: "/etl/api/v1/etl/execute",
+  },
+  {
+    action: "http",
+    durationMs: 775,
+    group: "Testing Migration",
+    createdAt: "2026-04-20T14:29:16.000Z",
+    endpoint: "/etl/api/v1/etl/execute",
+  },
+  {
+    action: "http",
+    durationMs: 791,
+    group: "Testing Migration",
+    createdAt: "2026-04-20T14:27:31.000Z",
+    endpoint: "/etl/api/v1/etl/execute",
+  },
+  {
+    action: "file-transfer",
+    durationMs: 817,
+    group: "Testing Migration",
+    createdAt: "2026-04-20T14:55:42.000Z",
+    endpoint: "/ctj/api/v1/s3/execute",
+  },
+  {
+    action: "file-transfer",
+    durationMs: 821,
+    group: "AI Squad",
+    createdAt: "2026-04-20T09:46:21.000Z",
+    endpoint: "/ctj/api/v1/s3/execute",
+  },
+  {
+    action: "db",
+    durationMs: 912,
+    group: "Operations",
+    createdAt: "2026-04-19T22:12:00.000Z",
+    endpoint: "/db/reconciliation/run",
+  },
+  {
+    action: "http",
+    durationMs: 1261,
+    group: "Lending",
+    createdAt: "2026-04-19T20:44:37.000Z",
+    endpoint: "/kpr/apply",
+  },
+  {
+    action: "db",
+    durationMs: 1468,
+    group: "Digital Channel",
+    createdAt: "2026-04-19T17:12:19.000Z",
+    endpoint: "/report/statement",
+  },
+  {
+    action: "http",
+    durationMs: 2109,
+    group: "Lending",
+    createdAt: "2026-04-19T15:07:11.000Z",
+    endpoint: "/kpr/document/upload",
+  },
+  {
+    action: "db",
+    durationMs: 2794,
+    group: "Lending",
+    createdAt: "2026-04-18T06:36:26.000Z",
+    endpoint: "/kpr/apply",
+  },
+];
+
+export const TOP_USERS: TopUser[] = [
+  {
+    user: "KMC035",
+    group: "AI Squad",
+    totalReq: 2511,
+    avgResMs: 7453,
+    totalFiles: 2,
+    totalFileSize: 3040000,
+  },
+  {
+    user: "KMC035",
+    group: "AI Squad",
+    totalReq: 20,
+    avgResMs: 438,
+    totalFiles: 2,
+    totalFileSize: 3040000,
+  },
+  {
+    user: "KMC034",
+    group: "AI Squad",
+    totalReq: 38,
+    avgResMs: 136,
+  },
+  {
+    user: "irzan.kusuma.wijaya",
+    group: "AI Squad",
+    totalReq: 44,
+    avgResMs: 103,
+  },
+  {
+    user: "Chatbot_2",
+    group: "AI Squad",
+    totalReq: 5,
+    avgResMs: 57,
+  },
+  {
+    user: "ops.recon.bot",
+    group: "Operations",
+    totalReq: 187,
+    avgResMs: 244,
+    totalFiles: 3,
+    totalFileSize: 2200000,
+  },
+  {
+    user: "digital.channel.bot",
+    group: "Digital Channel",
+    totalReq: 621,
+    avgResMs: 311,
+    totalFiles: 7,
+    totalFileSize: 6500000,
   },
 ];
