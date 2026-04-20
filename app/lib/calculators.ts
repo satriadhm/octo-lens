@@ -91,6 +91,7 @@ export function calcBudget(app: App): BudgetResult {
     spent: Math.round(spent / 1e6),
     proj: Math.round(proj / 1e6),
     total: Math.round(app.budget.total / 1e6),
+    pct: Math.round((spent / app.budget.total) * 100),
     overPct,
     level,
     levelColor,

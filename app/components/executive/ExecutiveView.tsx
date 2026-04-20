@@ -2,9 +2,10 @@
 
 import type { App, EnrichedApp } from "@/app/lib/types";
 import { Card, Label, Pill } from "@/app/components/shared/Card";
-import { ROICard } from "./ROICard";
+import { exportExecutiveCSV } from "@/app/lib/csv";
 import { BudgetBar } from "./BudgetBar";
 import { AISummary } from "./AISummary";
+import { BudgetCard } from "./BudgetCard";
 
 interface ExecutiveViewProps {
   enriched: EnrichedApp[];
@@ -17,6 +18,19 @@ export function ExecutiveView({
   onSelect,
   selected,
 }: ExecutiveViewProps) {
+  function adoptionColor(adoption: number) {
+    if (adoption >= 30) return "var(--color-green)";
+    if (adoption >= 10) return "var(--color-amber)";
+    if (adoption >= 2) return "var(--color-orange)";
+    return "var(--color-red)";
+  }
+
+  function uxColor(score: number) {
+    if (score >= 70) return "var(--color-green)";
+    if (score >= 50) return "var(--color-amber)";
+    return "var(--color-red)";
+  }
+
   const portfolio = {
     total: enriched.length,
     healthy: enriched.filter((a) =>
@@ -38,6 +52,29 @@ export function ExecutiveView({
     )
     .slice(0, 4);
 
+  const lowAdoption = enriched
+    .flatMap((entry) =>
+      entry.app.api.endpoints.map((endpoint) => ({
+        app: entry.app,
+        endpoint,
+      })),
+    )
+    .filter((entry) => entry.endpoint.adoption < 10)
+    .sort((a, b) => a.endpoint.adoption - b.endpoint.adoption);
+
+  const featureHotspots =
+    lowAdoption.length > 0
+      ? lowAdoption.slice(0, 6)
+      : enriched
+          .flatMap((entry) =>
+            entry.app.api.endpoints.map((endpoint) => ({
+              app: entry.app,
+              endpoint,
+            })),
+          )
+          .sort((a, b) => b.endpoint.calls - a.endpoint.calls)
+          .slice(0, 5);
+
   const narrativeStatus =
     portfolio.critical > 0
       ? `${portfolio.critical} app${portfolio.critical > 1 ? "s" : ""} underperforming — needs immediate attention`
@@ -48,26 +85,37 @@ export function ExecutiveView({
   return (
     <div className="p-6 flex flex-col gap-6 overflow-y-auto h-full max-w-[1400px] mx-auto w-full">
       {/* Narrative headline */}
-      <div className="animate-fade-in-up">
-        <h1 className="text-xl font-display font-bold text-txt mb-1">
-          Portfolio Overview
-        </h1>
-        <p className="text-sm text-txt-muted">
-          {portfolio.total} applications monitored &middot;{" "}
-          <span
-            className="font-medium"
-            style={{
-              color:
-                portfolio.critical > 0
-                  ? "var(--color-red)"
-                  : portfolio.atRisk > 0
-                    ? "var(--color-amber)"
-                    : "var(--color-green)",
-            }}
-          >
-            {narrativeStatus}
+      <div className="animate-fade-in-up flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-display font-bold text-txt mb-1">
+            Portfolio Overview
+          </h1>
+          <p className="text-sm text-txt-muted">
+            {portfolio.total} applications monitored &middot;{" "}
+            <span
+              className="font-medium"
+              style={{
+                color:
+                  portfolio.critical > 0
+                    ? "var(--color-red)"
+                    : portfolio.atRisk > 0
+                      ? "var(--color-amber)"
+                      : "var(--color-green)",
+              }}
+            >
+              {narrativeStatus}
+            </span>
+          </p>
+        </div>
+        <button
+          onClick={() => exportExecutiveCSV(enriched)}
+          className="bg-surface border border-border rounded-lg px-3 py-2 text-xs font-semibold text-txt cursor-pointer transition-colors hover:border-brand/30 hover:bg-brand-light/30 focus-visible:outline-2 focus-visible:outline-brand/40"
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <span aria-hidden="true">&#11015;</span>
+            Export CSV
           </span>
-        </p>
+        </button>
       </div>
 
       {/* KPI strip — 3 items with varied emphasis */}
@@ -113,18 +161,18 @@ export function ExecutiveView({
       {/* ROI Grid + Budget */}
       <div className="grid grid-cols-[1fr_320px] gap-5 animate-fade-in-up stagger-2">
         <Card variant="bordered" className="!p-5">
-          <Label>Portfolio ROI Heatmap</Label>
+          <Label>Portfolio Budget Health</Label>
           <p className="text-xs text-txt-dim mb-3">
             Click any application for detailed breakdown
           </p>
           <div className="grid grid-cols-3 gap-3">
             {[...enriched]
-              .sort((a, b) => b.roi.pct - a.roi.pct)
+              .sort((a, b) => b.budget.pct - a.budget.pct)
               .map((e) => (
-                <ROICard
+                <BudgetCard
                   key={e.app.id}
                   app={e.app}
-                  roi={e.roi}
+                  budget={e.budget}
                   onSelect={onSelect}
                   selected={selected?.id === e.app.id}
                 />
@@ -204,6 +252,89 @@ export function ExecutiveView({
 
         <Card variant="bordered">
           <AISummary enriched={enriched} />
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-2 gap-5 animate-fade-in-up stagger-4">
+        <Card variant="bordered">
+          <Label>UX Health Across Portfolio</Label>
+          <div className="mt-3 flex flex-col gap-2.5">
+            {[...enriched]
+              .sort((a, b) => a.app.ux.score - b.app.ux.score)
+              .map((entry) => (
+                <div
+                  key={entry.app.id}
+                  onClick={() => onSelect(entry.app)}
+                  onKeyDown={(ev) => {
+                    if (ev.key === "Enter" || ev.key === " ") {
+                      ev.preventDefault();
+                      onSelect(entry.app);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  className="flex gap-3 items-center cursor-pointer group rounded focus-visible:outline-2 focus-visible:outline-brand/40"
+                >
+                  <span className="text-xs text-txt font-medium min-w-[120px] group-hover:text-brand transition-colors">
+                    {entry.app.shortName}
+                  </span>
+                  <div className="flex-1 bg-surface-dim rounded-full h-2">
+                    <div
+                      className="h-full rounded-full transition-[width] duration-500"
+                      style={{
+                        background: uxColor(entry.app.ux.score),
+                        width: `${entry.app.ux.score}%`,
+                        opacity: 0.75,
+                      }}
+                    />
+                  </div>
+                  <span
+                    className="text-xs font-mono font-semibold min-w-[34px] text-right tabular-nums"
+                    style={{ color: uxColor(entry.app.ux.score) }}
+                  >
+                    {entry.app.ux.score}
+                  </span>
+                </div>
+              ))}
+          </div>
+        </Card>
+
+        <Card variant="bordered">
+          <Label>Feature Adoption Hotspots</Label>
+          <div className="mt-3 flex flex-col gap-2">
+            {featureHotspots.map(({ app, endpoint }, index) => {
+              const color = adoptionColor(endpoint.adoption);
+              return (
+                <div
+                  key={`${app.id}-${endpoint.path}-${index}`}
+                  onClick={() => onSelect(app)}
+                  onKeyDown={(ev) => {
+                    if (ev.key === "Enter" || ev.key === " ") {
+                      ev.preventDefault();
+                      onSelect(app);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  className="bg-surface-dim/60 border border-border rounded-lg px-3.5 py-2.5 cursor-pointer transition-colors hover:border-brand/30 hover:bg-brand-light/30 focus-visible:outline-2 focus-visible:outline-brand/40"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-[11px] text-txt-dim truncate">
+                        {app.name}
+                      </div>
+                      <code className="text-[11px] text-txt">{endpoint.path}</code>
+                    </div>
+                    <Pill
+                      label={`${endpoint.adoption}%`}
+                      color={color}
+                      bg={`color-mix(in oklch, ${color} 12%, transparent)`}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </Card>
       </div>
     </div>

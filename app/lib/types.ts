@@ -90,6 +90,7 @@ export interface BudgetResult {
   spent: number;
   proj: number;
   total: number;
+  pct: number;
   overPct: number;
   level: "CRITICAL" | "WARNING" | "SAFE";
   levelColor: string;

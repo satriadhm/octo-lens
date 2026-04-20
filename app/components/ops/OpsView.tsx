@@ -15,6 +15,7 @@ import {
 import type { App, EnrichedApp } from "@/app/lib/types";
 import { Card, Label, Badge, Pill } from "@/app/components/shared/Card";
 import { ChartTooltip } from "@/app/components/shared/ChartTooltip";
+import { exportOpsCSV } from "@/app/lib/csv";
 
 interface OpsViewProps {
   enriched: EnrichedApp[];
@@ -109,13 +110,24 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
   return (
     <div className="p-6 flex flex-col gap-6 overflow-y-auto h-full max-w-[1400px] mx-auto w-full">
       {/* Narrative */}
-      <div className="animate-fade-in-up">
-        <h1 className="text-xl font-display font-bold text-txt mb-1">
-          Operations Dashboard
-        </h1>
-        <p className="text-sm text-txt-muted">
-          Real-time application health and performance metrics
-        </p>
+      <div className="animate-fade-in-up flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-display font-bold text-txt mb-1">
+            Operations Dashboard
+          </h1>
+          <p className="text-sm text-txt-muted">
+            Real-time application health and performance metrics
+          </p>
+        </div>
+        <button
+          onClick={() => exportOpsCSV(enriched)}
+          className="bg-surface border border-border rounded-lg px-3 py-2 text-xs font-semibold text-txt cursor-pointer transition-colors hover:border-brand/30 hover:bg-brand-light/30 focus-visible:outline-2 focus-visible:outline-brand/40"
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <span aria-hidden="true">&#11015;</span>
+            Export CSV
+          </span>
+        </button>
       </div>
 
       {/* Ops KPI */}
