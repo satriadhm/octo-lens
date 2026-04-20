@@ -441,7 +441,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
                     }
                   }}
                   tabIndex={0}
-                  className="border-b border-border cursor-pointer transition-colors hover:bg-brand-light/30 focus-visible:bg-brand-light/30 focus-visible:outline-none"
+                  className="group border-b border-border cursor-pointer transition-colors hover:bg-brand-light/30 focus-visible:bg-brand-light/30 focus-visible:outline-none"
                 >
                   <td className="px-4 py-3 text-txt font-semibold">
                     {e.app.name}
@@ -499,7 +499,10 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-txt-dim text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                  <td
+                    className="px-4 py-3 text-txt-dim text-sm opacity-60 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+                    aria-hidden
+                  >
                     &rarr;
                   </td>
                 </tr>
