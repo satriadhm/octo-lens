@@ -101,6 +101,10 @@ body {
 .stagger-2 { animation-delay: 0.12s; }
 .stagger-3 { animation-delay: 0.18s; }
 .stagger-4 { animation-delay: 0.24s; }
+.stagger-5 { animation-delay: 0.30s; }
+.stagger-6 { animation-delay: 0.36s; }
+.stagger-7 { animation-delay: 0.42s; }
+.stagger-8 { animation-delay: 0.48s; }
 
 * {
   box-sizing: border-box;

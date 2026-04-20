@@ -4,6 +4,7 @@ import type { App, EnrichedApp } from "@/app/lib/types";
 import { Card, Label, Pill } from "@/app/components/shared/Card";
 import { ExportMenu } from "@/app/components/shared/ExportMenu";
 import { exportExecutiveCSV, exportExecutivePDF } from "@/app/lib/csv";
+import { uxColor, adoptionColor, rtColor } from "@/app/lib/utils";
 import { BudgetBar } from "./BudgetBar";
 import { AISummary } from "./AISummary";
 import { BudgetCard } from "./BudgetCard";
@@ -19,19 +20,6 @@ export function ExecutiveView({
   onSelect,
   selected,
 }: ExecutiveViewProps) {
-  function adoptionColor(adoption: number) {
-    if (adoption >= 30) return "var(--color-green)";
-    if (adoption >= 10) return "var(--color-amber)";
-    if (adoption >= 2) return "var(--color-orange)";
-    return "var(--color-red)";
-  }
-
-  function uxColor(score: number) {
-    if (score >= 70) return "var(--color-green)";
-    if (score >= 50) return "var(--color-amber)";
-    return "var(--color-red)";
-  }
-
   const portfolio = {
     total: enriched.length,
     healthy: enriched.filter(
@@ -155,7 +143,7 @@ export function ExecutiveView({
       </div>
 
       {/* Budget overview grid */}
-      <div className="grid grid-cols-[1fr_320px] gap-5 animate-fade-in-up stagger-2">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 animate-fade-in-up stagger-2">
         <Card variant="bordered" className="!p-5">
           <Label>Portfolio Budget Health</Label>
           <p className="text-xs text-txt-dim mb-3">

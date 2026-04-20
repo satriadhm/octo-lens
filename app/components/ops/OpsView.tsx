@@ -24,22 +24,12 @@ import { MethodBadge } from "@/app/components/shared/MethodBadge";
 import { StatusBadge } from "@/app/components/shared/StatusBadge";
 import { SourceTag } from "@/app/components/shared/SourceTag";
 import { UsageHeatmap } from "@/app/components/ops/UsageHeatmap";
+import { rtColor, uxColor, errorRateColor } from "@/app/lib/utils";
+import { SectionHeader } from "@/app/components/shared/SectionHeader";
 
 interface OpsViewProps {
   enriched: EnrichedApp[];
   onSelect: (app: App) => void;
-}
-
-function rtColor(ms: number) {
-  if (ms > 700) return "var(--color-red)";
-  if (ms > 400) return "var(--color-amber)";
-  return "var(--color-green)";
-}
-
-function uxColor(score: number) {
-  if (score >= 70) return "var(--color-green)";
-  if (score >= 50) return "var(--color-amber)";
-  return "var(--color-red)";
 }
 
 type SortKey = "name" | "mau" | "response" | "uptime" | "budgetPct" | "ux";
@@ -71,22 +61,50 @@ function actionTone(action: "http" | "file-transfer" | "db") {
   };
 }
 
-function PaginationStub() {
+function PaginationStub({ total = 25, pageSize = 6 }: { total?: number; pageSize?: number }) {
+  const [page, setPage] = useState(1);
+  const totalPages = Math.ceil(total / pageSize);
+
   return (
-    <div className="flex items-center justify-end gap-2 px-4 py-2.5 text-[11px] text-txt-dim">
-      <button
-        className="h-7 w-7 rounded-md border border-border hover:bg-surface-dim transition-colors"
-        type="button"
-      >
-        {"<"}
-      </button>
-      <span className="h-7 min-w-7 px-2 rounded-md bg-brand text-white grid place-items-center">1</span>
-      <button
-        className="h-7 w-7 rounded-md border border-border hover:bg-surface-dim transition-colors"
-        type="button"
-      >
-        {">"}
-      </button>
+    <div className="flex items-center justify-between gap-2 px-4 py-2.5 text-[11px] text-txt-dim border-t border-border">
+      <span className="text-[11px] text-txt-dim">
+        Showing {Math.min((page - 1) * pageSize + 1, total)}–{Math.min(page * pageSize, total)} of {total}
+      </span>
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={() => setPage((p: number) => Math.max(1, p - 1))}
+          disabled={page === 1}
+          className="h-7 w-7 rounded-md border border-border hover:bg-surface-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          type="button"
+          aria-label="Previous page"
+        >
+          {"<"}
+        </button>
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+          <button
+            key={p}
+            onClick={() => setPage(p)}
+            className={`h-7 min-w-7 px-2 rounded-md transition-colors text-[11px] ${
+              p === page
+                ? "bg-brand text-white"
+                : "border border-border hover:bg-surface-dim text-txt-dim"
+            }`}
+            type="button"
+            aria-current={p === page ? "page" : undefined}
+          >
+            {p}
+          </button>
+        ))}
+        <button
+          onClick={() => setPage((p: number) => Math.min(totalPages, p + 1))}
+          disabled={page === totalPages}
+          className="h-7 w-7 rounded-md border border-border hover:bg-surface-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          type="button"
+          aria-label="Next page"
+        >
+          {">"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -94,6 +112,7 @@ function PaginationStub() {
 export function OpsView({ enriched, onSelect }: OpsViewProps) {
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [appFilter, setAppFilter] = useState("");
 
   const rtData = enriched.map((e) => ({
     name: e.app.shortName,
@@ -124,7 +143,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
   const kpis = [
     { l: "Avg Response", v: `${avgResponse}ms`, c: "var(--color-blue)" },
     { l: "Total Requests", v: totalRequests.toLocaleString(), c: "var(--color-blue)" },
-    { l: "Error Rate", v: `${weightedErrorRate.toFixed(2)}%`, c: "var(--color-red)" },
+    { l: "Error Rate", v: `${weightedErrorRate.toFixed(2)}%`, c: errorRateColor(weightedErrorRate) },
     { l: "P95 Portfolio", v: `${portfolioP95}ms`, c: "var(--color-amber)" },
     { l: "Min Uptime", v: `${minUptime}%`, c: "var(--color-orange)" },
     { l: "Total MAU", v: totalMAU.toLocaleString(), c: "var(--color-green)" },
@@ -213,25 +232,23 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
     }
   }
 
-  const sorted = [...enriched].sort((a, b) => {
-    const dir = sortDir === "asc" ? 1 : -1;
-    switch (sortKey) {
-      case "name":
-        return a.app.name.localeCompare(b.app.name) * dir;
-      case "mau":
-        return (a.app.metrics.mau - b.app.metrics.mau) * dir;
-      case "response":
-        return (a.app.metrics.responseMs - b.app.metrics.responseMs) * dir;
-      case "uptime":
-        return (a.app.metrics.uptime - b.app.metrics.uptime) * dir;
-      case "budgetPct":
-        return (a.budget.pct - b.budget.pct) * dir;
-      case "ux":
-        return (a.app.ux.score - b.app.ux.score) * dir;
-      default:
-        return 0;
-    }
-  });
+  const sorted = [...enriched]
+    .filter((e) =>
+      appFilter.trim() === "" ||
+      e.app.name.toLowerCase().includes(appFilter.toLowerCase())
+    )
+    .sort((a, b) => {
+      const dir = sortDir === "asc" ? 1 : -1;
+      switch (sortKey) {
+        case "name": return a.app.name.localeCompare(b.app.name) * dir;
+        case "mau": return (a.app.metrics.mau - b.app.metrics.mau) * dir;
+        case "response": return (a.app.metrics.responseMs - b.app.metrics.responseMs) * dir;
+        case "uptime": return (a.app.metrics.uptime - b.app.metrics.uptime) * dir;
+        case "budgetPct": return (a.budget.pct - b.budget.pct) * dir;
+        case "ux": return (a.app.ux.score - b.app.ux.score) * dir;
+        default: return 0;
+      }
+    });
 
   const sortIndicator = (key: SortKey) =>
     sortKey === key ? (sortDir === "asc" ? " \u2191" : " \u2193") : "";
@@ -283,6 +300,8 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
           </div>
         ))}
       </div>
+
+      <SectionHeader title="Service Health" subtitle="Response time and UX scores across all applications" />
 
       {/* Charts row */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-2">
@@ -372,10 +391,21 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
         </Card>
       </div>
 
+      <SectionHeader title="Application Status" subtitle="Sortable live metrics — click any row for details" />
+
       {/* App detail table */}
       <Card className="!p-0 overflow-hidden animate-fade-in-up stagger-3">
         <div className="px-5 py-3 border-b border-border">
           <Label>All Applications — Live Status</Label>
+        </div>
+        <div className="px-4 py-2.5 border-b border-border bg-surface-dim/30">
+          <input
+            type="search"
+            value={appFilter}
+            onChange={(e) => setAppFilter(e.target.value)}
+            placeholder="Filter by application name…"
+            className="w-full max-w-xs text-xs bg-surface border border-border rounded-md px-3 py-1.5 text-txt placeholder:text-txt-dim outline-none focus:border-brand/50 transition-colors font-sans"
+          />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-xs">
@@ -479,8 +509,10 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
         </div>
       </Card>
 
+      <SectionHeader title="Latency Hotspots" subtitle="Top endpoints and services by P95 response time" />
+
       {/* Latency hotspots */}
-      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-4">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-4">
         <Card className="relative !p-0 overflow-hidden">
           <SourceTag source="/trace/p95-endpoint" />
           <div className="px-5 py-3 border-b border-border">
@@ -557,12 +589,14 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
         </Card>
       </div>
 
-      {/* P95 trend + heatmap */}
-      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-5">
+      <SectionHeader title="Traffic Patterns" subtitle="Hourly P95 trend and daily activity distribution" />
+
+      {/* P95 trend + heatmap — always side by side from lg up */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-5">
         <Card className="relative">
           <SourceTag source="/trace/p95-hourly" />
           <Label>P95 API Hourly</Label>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={200}>
             <LineChart data={hourlyAggregate}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
               <XAxis dataKey="h" tick={{ fontSize: 10, fill: "var(--color-text-muted)" }} axisLine={false} tickLine={false} />
@@ -587,17 +621,19 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
           </ResponsiveContainer>
         </Card>
 
-        <Card className="relative">
+        <Card className="relative flex flex-col">
           <SourceTag source="/custom-telemetry/group-usage" />
           <Label>Group Usage Heatmap</Label>
-          <div className="mt-1">
+          <div className="flex-1 flex flex-col justify-center">
             <UsageHeatmap values={usageHeatmap} />
           </div>
         </Card>
       </div>
 
+      <SectionHeader title="Slow Operations" subtitle="Queries and endpoints above 500ms threshold" />
+
       {/* Slow query / slow endpoint */}
-      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-6">
         <Card className="relative !p-0 overflow-hidden">
           <SourceTag source="/custom-telemetry/slow-query" />
           <div className="px-5 py-3 border-b border-border">
@@ -641,34 +677,34 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
             <Label>Slow Endpoint (above 500 ms, limit 25)</Label>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] border-collapse text-xs">
+            <table className="w-full min-w-[560px] border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-surface-dim/50">
                   <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Method</th>
                   <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">EndPoint</th>
-                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Status</th>
-                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Total Span</th>
                   <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">AppInfo</th>
                   <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Response Time (ms)</th>
-                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Created At</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {slowEndpoints.map((row) => (
-                  <tr key={`${row.app.id}-${row.path}`} className="border-b border-border">
+                  <tr
+                    key={`${row.app.id}-${row.path}`}
+                    className="border-b border-border"
+                    title={new Date(row.createdAt).toLocaleString()}
+                  >
                     <td className="px-4 py-2.5">
                       <MethodBadge method={row.method} />
                     </td>
                     <td className="px-4 py-2.5 font-mono text-txt-muted">{row.path}</td>
-                    <td className="px-4 py-2.5">
-                      <StatusBadge status={row.status} />
-                    </td>
-                    <td className="px-4 py-2.5 tabular-nums">{Math.round(row.calls / 1000)}</td>
                     <td className="px-4 py-2.5">{row.app.shortName}</td>
                     <td className="px-4 py-2.5 tabular-nums font-semibold" style={{ color: rtColor(row.p95Ms) }}>
                       {row.p95Ms.toLocaleString()}
                     </td>
-                    <td className="px-4 py-2.5 text-txt-muted">{new Date(row.createdAt).toLocaleString()}</td>
+                    <td className="px-4 py-2.5">
+                      <StatusBadge status={row.status} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -678,8 +714,10 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
         </Card>
       </div>
 
+      <SectionHeader title="Usage & Consumers" subtitle="Top users and team-level request distribution" />
+
       {/* Top users / monthly usage */}
-      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-7">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-7">
         <Card className="relative !p-0 overflow-hidden">
           <SourceTag source="/custom-telemetry/top-users" />
           <div className="px-5 py-3 border-b border-border">
@@ -717,25 +755,23 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
         <Card className="relative !p-0 overflow-hidden">
           <SourceTag source="/custom-telemetry/group-usage" />
           <div className="px-5 py-3 border-b border-border">
-            <Label>Monthly Usage by Team</Label>
+            <Label>Monthly Usage by Team — April 2026</Label>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] border-collapse text-xs">
+            <table className="w-full min-w-[640px] border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-surface-dim/50">
-                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Month Year</th>
                   <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Group</th>
                   <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Total Request</th>
                   <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Percentage</th>
                   <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Total Files</th>
                   <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Total File Size</th>
-                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Avg Upload Duration (ms)</th>
+                  <th className="px-4 py-2.5 text-left text-txt-dim font-semibold text-[11px]">Avg Response (ms)</th>
                 </tr>
               </thead>
               <tbody>
                 {monthlyUsageByTeam.map((row) => (
                   <tr key={row.group} className="border-b border-border">
-                    <td className="px-4 py-2.5">{row.month}</td>
                     <td className="px-4 py-2.5">{row.group}</td>
                     <td className="px-4 py-2.5 tabular-nums">{row.totalReq.toLocaleString()}</td>
                     <td className="px-4 py-2.5 tabular-nums">{row.percentage.toFixed(1)}%</td>
