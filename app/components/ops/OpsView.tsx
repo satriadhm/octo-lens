@@ -35,7 +35,7 @@ function uxColor(score: number) {
   return "var(--color-red)";
 }
 
-type SortKey = "name" | "mau" | "response" | "uptime" | "roi" | "ux";
+type SortKey = "name" | "mau" | "response" | "uptime" | "budgetPct" | "ux";
 type SortDir = "asc" | "desc";
 
 export function OpsView({ enriched, onSelect }: OpsViewProps) {
@@ -84,8 +84,8 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
         return (a.app.metrics.responseMs - b.app.metrics.responseMs) * dir;
       case "uptime":
         return (a.app.metrics.uptime - b.app.metrics.uptime) * dir;
-      case "roi":
-        return (a.roi.pct - b.roi.pct) * dir;
+      case "budgetPct":
+        return (a.budget.pct - b.budget.pct) * dir;
       case "ux":
         return (a.app.ux.score - b.app.ux.score) * dir;
       default:
@@ -102,7 +102,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
     { key: "mau", label: "MAU", sortable: true },
     { key: "response", label: "Response", sortable: true },
     { key: "uptime", label: "Uptime", sortable: true },
-    { key: "roi", label: "ROI", sortable: true },
+    { key: "budgetPct", label: "Budget %", sortable: true },
     { key: "", label: "Budget", sortable: false },
     { key: "ux", label: "UX", sortable: true },
     { key: "", label: "", sortable: false },
@@ -111,7 +111,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
   return (
     <div className="p-6 flex flex-col gap-6 overflow-y-auto h-full max-w-[1400px] mx-auto w-full">
       {/* Narrative */}
-      <div className="animate-fade-in-up flex items-start justify-between gap-4">
+      <div className="animate-fade-in-up relative z-[110] flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-display font-bold text-txt mb-1">
             Operations Dashboard
@@ -298,8 +298,11 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
                     {e.app.metrics.uptime}%
                   </td>
                   <td className="px-4 py-3">
-                    <Badge color={e.roi.color} bg={e.roi.bg}>
-                      {e.roi.pct}%
+                    <Badge
+                      color={e.budget.levelColor}
+                      bg={`color-mix(in oklch, ${e.budget.levelColor} 10%, transparent)`}
+                    >
+                      {e.budget.pct}%
                     </Badge>
                   </td>
                   <td className="px-4 py-3">

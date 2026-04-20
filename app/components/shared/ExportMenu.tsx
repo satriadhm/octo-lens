@@ -36,7 +36,7 @@ export function ExportMenu({ onExportCSV, onExportPDF }: ExportMenuProps) {
   }
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="relative z-[120]" ref={menuRef}>
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
@@ -54,7 +54,7 @@ export function ExportMenu({ onExportCSV, onExportPDF }: ExportMenuProps) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 min-w-[130px] rounded-lg border border-border bg-surface shadow-lg z-20 p-1"
+          className="absolute right-0 mt-2 min-w-[130px] rounded-lg border border-border bg-surface shadow-lg z-[130] p-1"
         >
           <button
             type="button"

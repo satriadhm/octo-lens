@@ -13,8 +13,8 @@ export function AISummary({ enriched }: AISummaryProps) {
 
   const portfolio = {
     total: enriched.length,
-    healthy: enriched.filter((a) =>
-      ["Excellent", "On Track"].includes(a.roi.label),
+    healthy: enriched.filter(
+      (a) => a.budget.level === "SAFE" && a.app.ux.score >= 50,
     ).length,
     budgetAlerts: enriched.filter((a) => a.budget.level !== "SAFE").length,
   };
@@ -23,7 +23,7 @@ export function AISummary({ enriched }: AISummaryProps) {
     setAiLoading(true);
     setTimeout(() => {
       setAiText(
-        `The IT portfolio shows mixed performance with ${portfolio.healthy} of ${portfolio.total} applications in healthy condition. KPR Digital requires immediate attention with negative ROI and the lowest UX score at 34. There are ${portfolio.budgetAlerts} applications with budget overrun risk that need close monitoring. Recommendation: prioritize KPR Digital evaluation and strengthen budget monitoring for applications with WARNING status.`,
+        `The IT portfolio shows mixed budget health, with ${portfolio.healthy} of ${portfolio.total} applications in healthy condition. KPR Digital requires immediate attention due to critical budget pressure and the lowest UX score at 34. There are ${portfolio.budgetAlerts} applications with budget overrun risk that need close monitoring. Recommendation: prioritize KPR Digital stabilization and tighten budget control for applications with WARNING status.`,
       );
       setAiLoading(false);
     }, 2000);

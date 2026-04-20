@@ -34,22 +34,22 @@ export function ExecutiveView({
 
   const portfolio = {
     total: enriched.length,
-    healthy: enriched.filter((a) =>
-      ["Excellent", "On Track"].includes(a.roi.label),
+    healthy: enriched.filter(
+      (a) => a.budget.level === "SAFE" && a.app.ux.score >= 50,
     ).length,
-    atRisk: enriched.filter((a) => a.roi.label === "At Risk").length,
-    critical: enriched.filter(
-      (a) => a.roi.label === "Underperforming",
+    atRisk: enriched.filter(
+      (a) => a.budget.level === "WARNING" || a.app.ux.score < 50,
     ).length,
+    critical: enriched.filter((a) => a.budget.level === "CRITICAL").length,
     budgetAlerts: enriched.filter((a) => a.budget.level !== "SAFE").length,
   };
 
   const riskApps = enriched
     .filter(
       (e) =>
-        e.roi.label !== "Excellent" ||
         e.budget.level !== "SAFE" ||
-        e.app.ux.score < 50,
+        e.app.ux.score < 50 ||
+        e.app.metrics.responseMs > 700,
     )
     .slice(0, 4);
 
@@ -78,15 +78,15 @@ export function ExecutiveView({
 
   const narrativeStatus =
     portfolio.critical > 0
-      ? `${portfolio.critical} app${portfolio.critical > 1 ? "s" : ""} underperforming — needs immediate attention`
+      ? `${portfolio.critical} app${portfolio.critical > 1 ? "s" : ""} in critical budget state — needs immediate attention`
       : portfolio.atRisk > 0
-        ? `${portfolio.atRisk} app${portfolio.atRisk > 1 ? "s" : ""} at risk — monitor closely`
-        : "All applications performing within targets";
+        ? `${portfolio.atRisk} app${portfolio.atRisk > 1 ? "s" : ""} at risk based on budget or UX`
+        : "All applications remain within budget health targets";
 
   return (
     <div className="p-6 flex flex-col gap-6 overflow-y-auto h-full max-w-[1400px] mx-auto w-full">
       {/* Narrative headline */}
-      <div className="animate-fade-in-up flex items-start justify-between gap-4">
+      <div className="animate-fade-in-up relative z-[110] flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-display font-bold text-txt mb-1">
             Portfolio Overview
@@ -154,7 +154,7 @@ export function ExecutiveView({
         </div>
       </div>
 
-      {/* ROI Grid + Budget */}
+      {/* Budget overview grid */}
       <div className="grid grid-cols-[1fr_320px] gap-5 animate-fade-in-up stagger-2">
         <Card variant="bordered" className="!p-5">
           <Label>Portfolio Budget Health</Label>
@@ -193,10 +193,6 @@ export function ExecutiveView({
           <div className="mt-3 flex flex-col gap-2">
             {riskApps.map((e, i) => {
               const risks: { t: string; c: string }[] = [];
-              if (e.roi.label === "Underperforming")
-                risks.push({ t: "Negative ROI", c: "var(--color-red)" });
-              if (e.roi.label === "At Risk")
-                risks.push({ t: "Low ROI", c: "var(--color-orange)" });
               if (e.budget.level === "CRITICAL")
                 risks.push({
                   t: "Budget critical",
@@ -211,6 +207,11 @@ export function ExecutiveView({
                 risks.push({
                   t: `Poor UX (${e.app.ux.score})`,
                   c: "var(--color-orange)",
+                });
+              if (e.app.metrics.responseMs > 700)
+                risks.push({
+                  t: `Slow response (${e.app.metrics.responseMs}ms)`,
+                  c: "var(--color-red)",
                 });
 
               return (
