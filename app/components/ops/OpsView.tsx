@@ -32,7 +32,7 @@ interface OpsViewProps {
   onSelect: (app: App) => void;
 }
 
-type SortKey = "name" | "mau" | "response" | "uptime" | "budgetPct" | "ux";
+type SortKey = "name" | "mau" | "response" | "uptime" | "budgetPct" | "ux" | "totalReq" | "p95" | "errorRate";
 type SortDir = "asc" | "desc";
 
 function formatBytes(bytes: number | undefined): string {
@@ -246,6 +246,20 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
         case "uptime": return (a.app.metrics.uptime - b.app.metrics.uptime) * dir;
         case "budgetPct": return (a.budget.pct - b.budget.pct) * dir;
         case "ux": return (a.app.ux.score - b.app.ux.score) * dir;
+        case "totalReq":
+          return (
+            ((a.app.metrics.totalRequests ?? a.app.api.totalReqs) -
+              (b.app.metrics.totalRequests ?? b.app.api.totalReqs)) * dir
+          );
+        case "p95":
+          return (
+            ((a.app.metrics.p95Ms ?? a.app.metrics.responseMs) -
+              (b.app.metrics.p95Ms ?? b.app.metrics.responseMs)) * dir
+          );
+        case "errorRate":
+          return (
+            ((a.app.metrics.errorRate ?? 0) - (b.app.metrics.errorRate ?? 0)) * dir
+          );
         default: return 0;
       }
     });
@@ -257,7 +271,10 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
     { key: "name", label: "Application", sortable: true },
     { key: "", label: "Type", sortable: false },
     { key: "mau", label: "MAU", sortable: true },
-    { key: "response", label: "Response", sortable: true },
+    { key: "totalReq", label: "Total Req", sortable: true },
+    { key: "response", label: "Avg Res", sortable: true },
+    { key: "p95", label: "P95 (ms)", sortable: true },
+    { key: "errorRate", label: "Error %", sortable: true },
     { key: "uptime", label: "Uptime", sortable: true },
     { key: "budgetPct", label: "Budget %", sortable: true },
     { key: "", label: "Budget", sortable: false },
@@ -284,7 +301,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       </div>
 
       {/* Ops KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-3 sm:gap-4 animate-fade-in-up stagger-1">
+      <div id="ops-kpis" className="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-3 sm:gap-4 animate-fade-in-up stagger-1">
         {kpis.map((k, i) => (
           <div
             key={i}
@@ -304,7 +321,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       <SectionHeader title="Service Health" subtitle="Response time and UX scores across all applications" />
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-2">
+      <div id="ops-service-health" className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-2">
         <Card>
           <Label>Response Time per Application (ms)</Label>
           <ResponsiveContainer width="100%" height={200}>
@@ -394,7 +411,8 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       <SectionHeader title="Application Status" subtitle="Sortable live metrics — click any row for details" />
 
       {/* App detail table */}
-      <Card className="!p-0 overflow-hidden animate-fade-in-up stagger-3">
+      <div id="ops-app-status">
+        <Card className="!p-0 overflow-hidden animate-fade-in-up stagger-3">
         <div className="px-5 py-3 border-b border-border">
           <Label>All Applications — Live Status</Label>
         </div>
@@ -408,7 +426,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
           />
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-xs">
+          <table className="w-full min-w-[900px] border-collapse text-xs">
             <thead>
               <tr className="border-b border-border bg-surface-dim/50">
                 {columns.map((col, i) => (
@@ -443,21 +461,44 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
                   tabIndex={0}
                   className="group border-b border-border cursor-pointer transition-colors hover:bg-brand-light/30 focus-visible:bg-brand-light/30 focus-visible:outline-none"
                 >
-                  <td className="px-4 py-3 text-txt font-semibold">
+                  {/* Application */}
+                  <td className="px-4 py-3 text-txt font-semibold whitespace-nowrap">
                     {e.app.name}
                   </td>
-                  <td className="px-4 py-3 text-txt-muted">{e.app.type}</td>
-                  <td className="px-4 py-3 text-txt font-mono tabular-nums">
+                  {/* Type */}
+                  <td className="px-4 py-3 text-txt-muted whitespace-nowrap">{e.app.type}</td>
+                  {/* MAU */}
+                  <td className="px-4 py-3 text-txt font-mono tabular-nums whitespace-nowrap">
                     {e.app.metrics.mau.toLocaleString()}
                   </td>
+                  {/* Total Requests */}
+                  <td className="px-4 py-3 font-mono tabular-nums whitespace-nowrap text-txt-muted">
+                    {(e.app.metrics.totalRequests ?? e.app.api.totalReqs).toLocaleString()}
+                  </td>
+                  {/* Avg Response */}
                   <td
-                    className="px-4 py-3 font-mono font-semibold tabular-nums"
+                    className="px-4 py-3 font-mono font-semibold tabular-nums whitespace-nowrap"
                     style={{ color: rtColor(e.app.metrics.responseMs) }}
                   >
                     {e.app.metrics.responseMs}ms
                   </td>
+                  {/* P95 */}
                   <td
-                    className="px-4 py-3 font-mono font-semibold tabular-nums"
+                    className="px-4 py-3 font-mono font-semibold tabular-nums whitespace-nowrap"
+                    style={{ color: rtColor(e.app.metrics.p95Ms ?? e.app.metrics.responseMs) }}
+                  >
+                    {(e.app.metrics.p95Ms ?? e.app.metrics.responseMs).toLocaleString()}ms
+                  </td>
+                  {/* Error Rate */}
+                  <td
+                    className="px-4 py-3 font-mono font-semibold tabular-nums whitespace-nowrap"
+                    style={{ color: errorRateColor(e.app.metrics.errorRate ?? 0) }}
+                  >
+                    {(e.app.metrics.errorRate ?? 0).toFixed(2)}%
+                  </td>
+                  {/* Uptime */}
+                  <td
+                    className="px-4 py-3 font-mono font-semibold tabular-nums whitespace-nowrap"
                     style={{
                       color:
                         e.app.metrics.uptime < 99
@@ -467,7 +508,8 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
                   >
                     {e.app.metrics.uptime}%
                   </td>
-                  <td className="px-4 py-3">
+                  {/* Budget % */}
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <Badge
                       color={e.budget.levelColor}
                       bg={`color-mix(in oklch, ${e.budget.levelColor} 10%, transparent)`}
@@ -475,16 +517,18 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
                       {e.budget.pct}%
                     </Badge>
                   </td>
-                  <td className="px-4 py-3">
+                  {/* Budget level */}
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <Pill
                       label={e.budget.level}
                       color={e.budget.levelColor}
                       bg={`color-mix(in oklch, ${e.budget.levelColor} 10%, transparent)`}
                     />
                   </td>
-                  <td className="px-4 py-3">
+                  {/* UX */}
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <div className="w-12 bg-surface-dim rounded-full h-1.5">
+                      <div className="w-12 bg-surface-dim rounded-full h-1.5 flex-shrink-0">
                         <div
                           className="h-full rounded-full"
                           style={{
@@ -499,6 +543,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
                       </span>
                     </div>
                   </td>
+                  {/* Arrow */}
                   <td
                     className="px-4 py-3 text-txt-dim text-sm opacity-60 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
                     aria-hidden
@@ -510,12 +555,13 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
             </tbody>
           </table>
         </div>
-      </Card>
+        </Card>
+      </div>
 
       <SectionHeader title="Latency Hotspots" subtitle="Top endpoints and services by P95 response time" />
 
       {/* Latency hotspots */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-4">
+      <div id="ops-latency" className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-4">
         <Card className="relative !p-0 overflow-hidden">
           <SourceTag source="/trace/p95-endpoint" />
           <div className="px-5 py-3 border-b border-border">
@@ -595,7 +641,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       <SectionHeader title="Traffic Patterns" subtitle="Hourly P95 trend and daily activity distribution" />
 
       {/* P95 trend + heatmap — always side by side from lg up */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-5">
+      <div id="ops-traffic" className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-5">
         <Card className="relative">
           <SourceTag source="/trace/p95-hourly" />
           <Label>P95 API Hourly</Label>
@@ -636,7 +682,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       <SectionHeader title="Slow Operations" subtitle="Queries and endpoints above 500ms threshold" />
 
       {/* Slow query / slow endpoint */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-6">
+      <div id="ops-slow-ops" className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-6">
         <Card className="relative !p-0 overflow-hidden">
           <SourceTag source="/custom-telemetry/slow-query" />
           <div className="px-5 py-3 border-b border-border">
@@ -720,7 +766,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       <SectionHeader title="Usage & Consumers" subtitle="Top users and team-level request distribution" />
 
       {/* Top users / monthly usage */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-7">
+      <div id="ops-usage" className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-7">
         <Card className="relative !p-0 overflow-hidden">
           <SourceTag source="/custom-telemetry/top-users" />
           <div className="px-5 py-3 border-b border-border">

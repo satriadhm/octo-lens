@@ -74,7 +74,7 @@ export function ExecutiveView({
   return (
     <div className="p-6 flex flex-col gap-6 overflow-y-auto h-full max-w-[1400px] mx-auto w-full">
       {/* Narrative headline */}
-      <div className="animate-fade-in-up relative z-[110] flex items-start justify-between gap-4">
+      <div id="exec-overview" className="animate-fade-in-up relative z-[110] flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-display font-bold text-txt mb-1">
             Portfolio Overview
@@ -103,7 +103,7 @@ export function ExecutiveView({
       </div>
 
       {/* KPI strip — 3 items with varied emphasis */}
-      <div className="grid grid-cols-3 gap-4 animate-fade-in-up stagger-1">
+      <div id="exec-kpis" className="grid grid-cols-3 gap-4 animate-fade-in-up stagger-1">
         <div className="bg-surface border border-border rounded-xl px-5 py-4">
           <Label>Healthy</Label>
           <div className="flex items-baseline gap-2">
@@ -143,7 +143,7 @@ export function ExecutiveView({
       </div>
 
       {/* Budget overview grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 animate-fade-in-up stagger-2">
+      <div id="exec-budget" className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 animate-fade-in-up stagger-2">
         <Card variant="bordered" className="!p-5">
           <Label>Portfolio Budget Health</Label>
           <p className="text-xs text-txt-dim mb-3">
@@ -175,7 +175,7 @@ export function ExecutiveView({
       </div>
 
       {/* Bottom row: Risks + AI Summary */}
-      <div className="grid grid-cols-2 gap-5 animate-fade-in-up stagger-3">
+      <div id="exec-risks" className="grid grid-cols-2 gap-5 animate-fade-in-up stagger-3">
         <Card variant="bordered">
           <Label color="var(--color-red)">Top Risks This Month</Label>
           <div className="mt-3 flex flex-col gap-2">
@@ -240,7 +240,7 @@ export function ExecutiveView({
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 gap-5 animate-fade-in-up stagger-4">
+      <div id="exec-ux" className="grid grid-cols-2 gap-5 animate-fade-in-up stagger-4">
         <Card variant="bordered">
           <Label>UX Health Across Portfolio</Label>
           <div className="mt-3 flex flex-col gap-2.5">
