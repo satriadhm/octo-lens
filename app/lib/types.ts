@@ -13,7 +13,6 @@ export interface AppMetrics {
   mau: number;
   responseMs: number;
   uptime: number;
-  lastMonthRoi: number;
   p50Ms?: number;
   p95Ms?: number;
   p99Ms?: number;
@@ -77,15 +76,6 @@ export interface App {
   api: AppApi;
 }
 
-export interface ROIResult {
-  pct: number;
-  label: "Excellent" | "On Track" | "At Risk" | "Underperforming";
-  color: string;
-  bg: string;
-  trend: number;
-  netValue: number;
-}
-
 export interface BudgetFuture {
   month: number;
   spend: number;
@@ -117,7 +107,6 @@ export interface BudgetResult {
 
 export interface EnrichedApp {
   app: App;
-  roi: ROIResult;
   budget: BudgetResult;
 }
 

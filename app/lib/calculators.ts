@@ -1,34 +1,4 @@
-import type { App, ROIResult, BudgetResult, BudgetChartDatum, BudgetFuture } from "./types";
-
-export function calcROI(app: App): ROIResult {
-  const roi = ((app.value.totalRevenue - app.cost.total) / app.cost.total) * 100;
-  const rounded = Math.round(roi);
-
-  let label: ROIResult["label"];
-  let color: string;
-  let bg: string;
-
-  if (roi > 150) {
-    label = "Excellent";
-    color = "#059669";
-    bg = "#D1FAE5";
-  } else if (roi > 50) {
-    label = "On Track";
-    color = "#D97706";
-    bg = "#FEF3C7";
-  } else if (roi > 0) {
-    label = "At Risk";
-    color = "#EA580C";
-    bg = "#FFEDD5";
-  } else {
-    label = "Underperforming";
-    color = "#DC2626";
-    bg = "#FEE2E2";
-  }
-
-  const trend = rounded - (app.metrics.lastMonthRoi || rounded);
-  return { pct: rounded, label, color, bg, trend, netValue: app.value.totalRevenue - app.cost.total };
-}
+import type { App, BudgetResult, BudgetChartDatum, BudgetFuture } from "./types";
 
 export function calcBudget(app: App): BudgetResult {
   const h = app.budget.history;

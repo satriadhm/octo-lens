@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { App, ROIResult, BudgetResult } from "@/app/lib/types";
-import { Badge, Pill } from "@/app/components/shared/Card";
+import type { App, BudgetResult } from "@/app/lib/types";
+import { Pill } from "@/app/components/shared/Card";
 import { OverviewTab } from "./OverviewTab";
 import { BudgetTab } from "./BudgetTab";
 import { UXTab } from "./UXTab";
@@ -10,7 +10,6 @@ import { FeaturesTab } from "./FeaturesTab";
 
 interface DetailDrawerProps {
   app: App;
-  roi: ROIResult;
   budget: BudgetResult;
   onClose: () => void;
 }
@@ -18,7 +17,7 @@ interface DetailDrawerProps {
 const TABS = ["overview", "budget", "ux", "features"] as const;
 type TabId = (typeof TABS)[number];
 
-export function DetailDrawer({ app, roi, budget, onClose }: DetailDrawerProps) {
+export function DetailDrawer({ app, budget, onClose }: DetailDrawerProps) {
   const [tab, setTab] = useState<TabId>("overview");
   const drawerRef = useRef<HTMLDivElement>(null);
   const uxColor =
@@ -56,9 +55,6 @@ export function DetailDrawer({ app, roi, budget, onClose }: DetailDrawerProps) {
             {app.name}
           </h2>
           <div className="flex gap-1.5">
-            <Badge color={roi.color} bg={roi.bg}>
-              {roi.label}
-            </Badge>
             <Pill
               label={budget.level}
               color={budget.levelColor}
@@ -101,7 +97,7 @@ export function DetailDrawer({ app, roi, budget, onClose }: DetailDrawerProps) {
 
       {/* Tab content */}
       <div className="flex-1 overflow-y-auto p-5 bg-background">
-        {tab === "overview" && <OverviewTab app={app} roi={roi} />}
+        {tab === "overview" && <OverviewTab app={app} />}
         {tab === "budget" && <BudgetTab budget={budget} />}
         {tab === "ux" && <UXTab app={app} />}
         {tab === "features" && <FeaturesTab app={app} />}

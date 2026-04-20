@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import type { App, ViewMode } from "@/app/lib/types";
 import { APPS } from "@/app/lib/data";
-import { calcROI, calcBudget } from "@/app/lib/calculators";
+import { calcBudget } from "@/app/lib/calculators";
 import { Header } from "@/app/components/layout/Header";
 import { Sidebar } from "@/app/components/layout/Sidebar";
 import { ExecutiveView } from "@/app/components/executive/ExecutiveView";
@@ -12,7 +12,6 @@ import { DetailDrawer } from "@/app/components/detail/DetailDrawer";
 
 const enriched = APPS.map((app) => ({
   app,
-  roi: calcROI(app),
   budget: calcBudget(app),
 }));
 
@@ -85,7 +84,6 @@ export function Dashboard() {
                 />
                 <DetailDrawer
                   app={selected}
-                  roi={selectedEnriched.roi}
                   budget={selectedEnriched.budget}
                   onClose={() => setSelected(null)}
                 />
