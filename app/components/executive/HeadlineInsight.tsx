@@ -45,41 +45,28 @@ export function HeadlineInsight({ enriched }: HeadlineInsightProps) {
 
   return (
     <section
-      className="relative overflow-hidden rounded-2xl text-white shadow-[0_10px_30px_-12px_rgba(139,0,0,0.6)]"
-      style={{
-        background:
-          "linear-gradient(135deg, color-mix(in oklch, var(--color-brand) 75%, black) 0%, color-mix(in oklch, var(--color-brand) 88%, var(--color-danger)) 45%, var(--color-danger) 100%)",
-      }}
+      className="rounded-xl border border-white/15 bg-brand text-white shadow-sm"
       aria-label="Portfolio headline insight"
     >
-      <div
-        className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full opacity-30 blur-2xl"
-        style={{
-          background:
-            "radial-gradient(circle, color-mix(in oklch, white 86%, transparent), transparent 70%)",
-        }}
-        aria-hidden
-      />
       <div className="relative flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-white/70">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-status-pulse" />
-              AI Headline · Live
+            <span className="text-[11px] font-display font-semibold uppercase tracking-[0.1em] text-white/80">
+              Portfolio insight
             </span>
             <button
               type="button"
               onClick={() => setRunId((n) => n + 1)}
               aria-label="Regenerate headline"
               title="Regenerate headline"
-              className="ml-auto lg:hidden inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white/80 focus-visible:outline-2 focus-visible:outline-white/60"
+              className="ml-auto lg:hidden inline-flex items-center justify-center h-10 w-10 rounded-lg border border-white/25 bg-white/10 hover:bg-white/15 transition-colors text-white/90 focus-visible:outline-2 focus-visible:outline-white/60"
             >
               <RefreshIcon />
             </button>
           </div>
 
           {showSentence ? (
-            <p className="font-display text-xl sm:text-2xl font-semibold leading-snug text-white">
+            <p className="font-display text-lg sm:text-xl font-semibold leading-snug text-white max-w-[65ch]">
               {streamed}
               {state === "streaming" && (
                 <span
@@ -115,7 +102,7 @@ export function HeadlineInsight({ enriched }: HeadlineInsightProps) {
             onClick={() => setRunId((n) => n + 1)}
             aria-label="Regenerate headline"
             title="Regenerate headline"
-              className="hidden lg:inline-flex items-center justify-center h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white/80 focus-visible:outline-2 focus-visible:outline-white/60"
+            className="hidden lg:inline-flex items-center justify-center h-11 w-11 rounded-lg border border-white/25 bg-white/10 hover:bg-white/15 transition-colors text-white/90 focus-visible:outline-2 focus-visible:outline-white/60"
           >
             <RefreshIcon />
           </button>
@@ -136,13 +123,13 @@ function Stat({
 }) {
   return (
     <div
-      className={`flex-1 min-w-[120px] rounded-xl px-3.5 py-2.5 backdrop-blur-sm border ${
+      className={`flex-1 min-w-[120px] rounded-lg px-3.5 py-2.5 border ${
         accent
-          ? "bg-white/15 border-white/25"
-          : "bg-white/8 border-white/15"
+          ? "bg-white/12 border-white/25"
+          : "bg-white/6 border-white/15"
       }`}
     >
-      <div className="text-[10px] uppercase tracking-[0.12em] text-white/70 font-semibold">
+      <div className="text-[11px] uppercase tracking-[0.08em] text-white/75 font-semibold">
         {label}
       </div>
       <div className="text-base sm:text-lg font-display font-bold text-white tabular-nums leading-tight">

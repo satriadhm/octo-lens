@@ -142,6 +142,30 @@ body {
 .stagger-7 { animation-delay: 0.42s; }
 .stagger-8 { animation-delay: 0.48s; }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-in,
+  .animate-fade-in-up,
+  .animate-status-pulse,
+  .animate-caret-blink,
+  .animate-step-fade-in,
+  .animate-layer-fade-in,
+  .animate-spin360 {
+    animation: none !important;
+    animation-delay: 0s !important;
+  }
+
+  .stagger-1,
+  .stagger-2,
+  .stagger-3,
+  .stagger-4,
+  .stagger-5,
+  .stagger-6,
+  .stagger-7,
+  .stagger-8 {
+    animation-delay: 0s !important;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
