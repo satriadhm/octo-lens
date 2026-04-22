@@ -65,7 +65,7 @@ export function AISummary({ enriched }: AISummaryProps) {
               aria-label="Analysis complete"
             />
           )}
-          <span className="text-[9px] font-medium text-txt-dim bg-surface-dim border border-border rounded px-1.5 py-0.5 uppercase tracking-wider">
+          <span className="text-[11px] font-medium text-txt-dim bg-surface-dim border border-border rounded px-1.5 py-0.5 uppercase tracking-wider">
             Demo
           </span>
         </div>
@@ -74,7 +74,7 @@ export function AISummary({ enriched }: AISummaryProps) {
           onClick={() => setRunId((n) => n + 1)}
           aria-label="Regenerate summary"
           title="Regenerate"
-          className="inline-flex items-center justify-center h-6 w-6 rounded-md text-txt-muted hover:text-brand hover:bg-brand-light transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
+          className="inline-flex items-center justify-center h-10 w-10 rounded-md text-txt-muted hover:text-brand hover:bg-brand-light transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
         >
           <RefreshIcon />
         </button>

@@ -133,7 +133,7 @@ export function FeatureValueMatrix({
         className="px-5 py-3 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
         style={{
           background:
-            "linear-gradient(90deg, #1f1f1f 0%, #2a0a0d 45%, #8B0000 100%)",
+            "linear-gradient(90deg, color-mix(in oklch, var(--color-foreground) 90%, transparent) 0%, color-mix(in oklch, var(--color-brand) 40%, var(--color-foreground)) 100%)",
         }}
       >
         <div className="flex items-center gap-2.5">
@@ -167,46 +167,99 @@ export function FeatureValueMatrix({
           </p>
         </div>
         {zombies.length > 0 && (
-          <span className="text-[10px] font-semibold tracking-wide uppercase bg-white/15 px-2 py-1 rounded-md">
+          <span className="text-[11px] font-semibold tracking-wide uppercase bg-white/15 px-2 py-1 rounded-md">
             Review quarterly
           </span>
         )}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[960px] border-collapse text-xs">
+      <div className="block md:hidden px-3 py-3 space-y-2">
+        {sorted.map((row) => {
+          const rowKey = `${row.app.id}-${row.investment.path}`;
+          const isOpen = expanded === rowKey;
+          return (
+            <div
+              key={rowKey}
+              className="rounded-xl border border-border bg-surface px-3.5 py-3"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <code className="text-[11px] text-txt font-mono">
+                    {row.endpoint.path}
+                  </code>
+                  {!selectedApp && (
+                    <div className="text-[11px] text-txt-dim mt-0.5">
+                      {row.app.name}
+                    </div>
+                  )}
+                </div>
+                <ClassBadge classification={row.investment.classification} />
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
+                <MiniStat label="Usage (30d)" value={row.usage30d.toLocaleString()} />
+                <MiniStat label="Investment" value={idr(row.investment.investedIDR)} />
+              </div>
+              <button
+                type="button"
+                onClick={() => setExpanded(isOpen ? null : rowKey)}
+                aria-expanded={isOpen}
+                className="mt-2.5 h-11 px-3 rounded-md border border-border text-[12px] font-semibold text-txt hover:bg-surface-dim focus-visible:outline-2 focus-visible:outline-brand/40"
+              >
+                {isOpen ? "Hide details" : "Show details"}
+              </button>
+              {isOpen && (
+                <div className="mt-3 pt-3 border-t border-border">
+                  <ExpandedPanel row={row} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="overflow-x-auto hidden md:block">
+        <table className="w-full min-w-[780px] border-collapse text-xs">
           <thead>
             <tr className="bg-surface-dim/60 border-b border-border">
-              <Th onSort={() => handleSort("name")} indicator={sortIndicator("name")}>
+              <Th
+                onSort={() => handleSort("name")}
+                indicator={sortIndicator("name")}
+                ariaSort={sortKey === "name" ? sortDir : undefined}
+              >
                 Feature
               </Th>
               <Th
                 onSort={() => handleSort("module")}
                 indicator={sortIndicator("module")}
+                ariaSort={sortKey === "module" ? sortDir : undefined}
               >
                 Module
               </Th>
               <Th
                 onSort={() => handleSort("usage")}
                 indicator={sortIndicator("usage")}
+                ariaSort={sortKey === "usage" ? sortDir : undefined}
               >
                 Usage (30d)
               </Th>
               <Th
                 onSort={() => handleSort("trend")}
                 indicator={sortIndicator("trend")}
+                ariaSort={sortKey === "trend" ? sortDir : undefined}
               >
                 Trend
               </Th>
               <Th
                 onSort={() => handleSort("classification")}
                 indicator={sortIndicator("classification")}
+                ariaSort={sortKey === "classification" ? sortDir : undefined}
               >
                 AI Classification
               </Th>
               <Th
                 onSort={() => handleSort("investment")}
                 indicator={sortIndicator("investment")}
+                ariaSort={sortKey === "investment" ? sortDir : undefined}
               >
                 Est. Investment
               </Th>
@@ -250,18 +303,32 @@ function Th({
   children,
   onSort,
   indicator,
+  ariaSort,
 }: {
   children: React.ReactNode;
   onSort: () => void;
   indicator: string;
+  ariaSort?: SortDir;
 }) {
   return (
     <th
-      onClick={onSort}
-      className="px-4 py-2.5 text-left text-txt-dim font-semibold font-display text-[11px] tracking-[0.04em] whitespace-nowrap cursor-pointer hover:text-txt select-none"
+      aria-sort={
+        ariaSort === "asc"
+          ? "ascending"
+          : ariaSort === "desc"
+            ? "descending"
+            : "none"
+      }
+      className="px-4 py-2.5 text-left text-txt-dim font-semibold font-display text-[11px] tracking-[0.04em] whitespace-nowrap"
     >
-      {children}
-      {indicator}
+      <button
+        type="button"
+        onClick={onSort}
+        className="inline-flex items-center gap-1 hover:text-txt focus-visible:outline-2 focus-visible:outline-brand/40 rounded-sm"
+      >
+        {children}
+        <span aria-hidden>{indicator}</span>
+      </button>
     </th>
   );
 }
@@ -280,10 +347,9 @@ function FeatureRow({
   return (
     <>
       <tr
-        className={`border-b border-border cursor-pointer transition-colors ${
+        className={`border-b border-border transition-colors ${
           isOpen ? "bg-brand-light/40" : "hover:bg-brand-light/20"
         }`}
-        onClick={onToggle}
       >
         <td className="px-4 py-3 whitespace-nowrap">
           <div className="flex flex-col gap-0.5">
@@ -310,8 +376,16 @@ function FeatureRow({
         <td className="px-4 py-3 text-txt font-mono tabular-nums whitespace-nowrap">
           {idr(row.investment.investedIDR)}
         </td>
-        <td className="px-4 py-3 text-txt-muted text-[11px] max-w-[280px]">
+        <td className="px-4 py-3 text-txt-muted text-[11px] max-w-[320px]">
           <span className="line-clamp-2">{row.investment.recommendation}</span>
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={isOpen}
+            className="mt-2 h-11 px-3 rounded-md border border-border text-[11px] font-semibold text-txt hover:bg-surface focus-visible:outline-2 focus-visible:outline-brand/40"
+          >
+            {isOpen ? "Hide details" : "Details"}
+          </button>
         </td>
       </tr>
       {isOpen && (
@@ -443,7 +517,7 @@ function ExpandedPanel({ row }: { row: Row }) {
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-border bg-surface px-3 py-2">
-      <div className="text-[9px] uppercase tracking-[0.14em] text-txt-dim font-semibold">
+      <div className="text-[11px] uppercase tracking-[0.12em] text-txt-dim font-semibold">
         {label}
       </div>
       <div className="text-[13px] font-display font-bold text-txt tabular-nums">

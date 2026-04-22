@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -83,7 +83,7 @@ function PaginationStub({ total = 25, pageSize = 6 }: { total?: number; pageSize
         <button
           onClick={() => setPage((p: number) => Math.max(1, p - 1))}
           disabled={page === 1}
-          className="h-7 w-7 rounded-md border border-border hover:bg-surface-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="h-10 w-10 rounded-md border border-border hover:bg-surface-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           type="button"
           aria-label="Previous page"
         >
@@ -93,7 +93,7 @@ function PaginationStub({ total = 25, pageSize = 6 }: { total?: number; pageSize
           <button
             key={p}
             onClick={() => setPage(p)}
-            className={`h-7 min-w-7 px-2 rounded-md transition-colors text-[11px] ${
+            className={`h-10 min-w-10 px-2 rounded-md transition-colors text-[11px] ${
               p === page
                 ? "bg-brand text-white"
                 : "border border-border hover:bg-surface-dim text-txt-dim"
@@ -107,7 +107,7 @@ function PaginationStub({ total = 25, pageSize = 6 }: { total?: number; pageSize
         <button
           onClick={() => setPage((p: number) => Math.min(totalPages, p + 1))}
           disabled={page === totalPages}
-          className="h-7 w-7 rounded-md border border-border hover:bg-surface-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="h-10 w-10 rounded-md border border-border hover:bg-surface-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           type="button"
           aria-label="Next page"
         >
@@ -122,6 +122,8 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [appFilter, setAppFilter] = useState("");
+  const [focusedSectionId, setFocusedSectionId] = useState<string | null>(null);
+  const focusTimerRef = useRef<number | null>(null);
 
   const rtData = enriched.map((e) => ({
     name: e.app.shortName,
@@ -301,9 +303,12 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
     const el = document.getElementById(targetId);
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "start" });
-    el.classList.add("ring-2", "ring-brand/40", "rounded-xl");
-    window.setTimeout(() => {
-      el.classList.remove("ring-2", "ring-brand/40", "rounded-xl");
+    setFocusedSectionId(targetId);
+    if (focusTimerRef.current) {
+      window.clearTimeout(focusTimerRef.current);
+    }
+    focusTimerRef.current = window.setTimeout(() => {
+      setFocusedSectionId((current) => (current === targetId ? null : current));
     }, 1600);
     if (area === "zombie") {
       setSortKey("totalReq");
@@ -344,7 +349,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       <AITechnicalSummary enriched={enriched} onFocusArea={handleFocusArea} />
 
       {/* Ops KPI */}
-      <div id="ops-kpis" className="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-3 sm:gap-4 animate-fade-in-up stagger-1">
+      <div id="ops-kpis" className={`grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-3 sm:gap-4 animate-fade-in-up stagger-1 transition-all ${focusedSectionId === "ops-kpis" ? "ring-2 ring-brand/40 rounded-xl p-1" : ""}`}>
         {kpis.map((k, i) => (
           <div
             key={i}
@@ -454,7 +459,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       <SectionHeader title="Application Status" subtitle="Sortable live metrics — click any row for details" />
 
       {/* App detail table */}
-      <div id="ops-app-status">
+      <div id="ops-app-status" className={focusedSectionId === "ops-app-status" ? "ring-2 ring-brand/40 rounded-xl p-1 transition-all" : ""}>
         <Card className="!p-0 overflow-hidden animate-fade-in-up stagger-3">
         <div className="px-5 py-3 border-b border-border">
           <Label>All Applications — Live Status</Label>
@@ -475,17 +480,27 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
                 {columns.map((col, i) => (
                   <th
                     key={i}
-                    onClick={
-                      col.sortable && col.key
-                        ? () => handleSort(col.key as SortKey)
-                        : undefined
+                    aria-sort={
+                      col.sortable && col.key && sortKey === col.key
+                        ? sortDir === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : "none"
                     }
-                    className={`px-4 py-2.5 text-left text-txt-dim font-semibold font-display text-[11px] tracking-[0.04em] whitespace-nowrap ${
-                      col.sortable ? "cursor-pointer hover:text-txt select-none" : ""
-                    }`}
+                    className="px-4 py-2.5 text-left text-txt-dim font-semibold font-display text-[11px] tracking-[0.04em] whitespace-nowrap"
                   >
-                    {col.label}
-                    {col.sortable && col.key ? sortIndicator(col.key as SortKey) : ""}
+                    {col.sortable && col.key ? (
+                      <button
+                        type="button"
+                        onClick={() => handleSort(col.key as SortKey)}
+                        className="inline-flex items-center gap-1 hover:text-txt select-none focus-visible:outline-2 focus-visible:outline-brand/40 rounded-sm"
+                      >
+                        {col.label}
+                        {sortIndicator(col.key as SortKey)}
+                      </button>
+                    ) : (
+                      col.label
+                    )}
                   </th>
                 ))}
               </tr>
@@ -604,7 +619,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
       <SectionHeader title="Latency Hotspots" subtitle="Top endpoints and services by P95 response time" />
 
       {/* Latency hotspots */}
-      <div id="ops-latency" className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-4">
+      <div id="ops-latency" className={`grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-4 transition-all ${focusedSectionId === "ops-latency" ? "ring-2 ring-brand/40 rounded-xl p-1" : ""}`}>
         <Card className="relative !p-0 overflow-hidden">
           <SourceTag source="/trace/p95-endpoint" />
           <div className="px-5 py-3 border-b border-border">

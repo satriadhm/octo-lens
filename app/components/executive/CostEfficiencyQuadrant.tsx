@@ -76,7 +76,7 @@ export function CostEfficiencyQuadrant({
             x2={xMid}
             y1={yMid}
             y2={yMax}
-            fill="#C8102E"
+            fill="color-mix(in oklch, var(--color-danger) 28%, transparent)"
             fillOpacity={0.09}
             stroke="none"
             ifOverflow="visible"
@@ -86,7 +86,7 @@ export function CostEfficiencyQuadrant({
             x2={100}
             y1={yMid}
             y2={yMax}
-            fill="#059669"
+            fill="color-mix(in oklch, var(--color-ok) 28%, transparent)"
             fillOpacity={0.09}
             stroke="none"
             ifOverflow="visible"
@@ -96,7 +96,7 @@ export function CostEfficiencyQuadrant({
             x2={xMid}
             y1={0}
             y2={yMid}
-            fill="#6B7280"
+            fill="color-mix(in oklch, var(--color-txt-dim) 22%, transparent)"
             fillOpacity={0.07}
             stroke="none"
             ifOverflow="visible"
@@ -106,7 +106,7 @@ export function CostEfficiencyQuadrant({
             x2={100}
             y1={0}
             y2={yMid}
-            fill="#D97706"
+            fill="color-mix(in oklch, var(--color-alert) 30%, transparent)"
             fillOpacity={0.1}
             stroke="none"
             ifOverflow="visible"
@@ -211,6 +211,32 @@ export function CostEfficiencyQuadrant({
           <QuadrantLabel tone="warn">UNDERPROVISIONED</QuadrantLabel>
         </div>
       </div>
+
+      <div className="mt-3 border-t border-border pt-3">
+        <p className="text-[11px] text-txt-dim mb-2">
+          Keyboard selection fallback
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {data.map((d) => {
+            const isSelected = d.app.id === selectedId;
+            return (
+              <button
+                key={d.app.id}
+                type="button"
+                onClick={() => onSelect(d.app)}
+                aria-pressed={isSelected}
+                className={`h-11 px-3 rounded-md border text-[11px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-brand/40 ${
+                  isSelected
+                    ? "border-brand text-brand bg-brand-light"
+                    : "border-border text-txt-muted hover:text-txt hover:border-border-hi"
+                }`}
+              >
+                {d.app.shortName}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -230,7 +256,7 @@ function QuadrantLabel({
   } as const;
   return (
     <span
-      className={`text-[9px] font-display font-bold tracking-[0.18em] uppercase ${colorMap[tone]}`}
+      className={`text-[11px] font-display font-bold tracking-[0.14em] uppercase ${colorMap[tone]}`}
     >
       {children}
     </span>

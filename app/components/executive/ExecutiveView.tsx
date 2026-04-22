@@ -131,7 +131,7 @@ export function ExecutiveView({
               <button
                 type="button"
                 onClick={() => setQuadrantApp(null)}
-                className="text-[10px] text-txt-muted border border-border rounded px-2 py-1 hover:text-brand hover:border-brand/40 transition-colors"
+                className="h-10 px-3 text-[11px] text-txt-muted border border-border rounded hover:text-brand hover:border-brand/40 transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
               >
                 Clear selection
               </button>

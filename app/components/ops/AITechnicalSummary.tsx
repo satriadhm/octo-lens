@@ -129,7 +129,7 @@ export function AITechnicalSummary({
                 />
               )}
             </h2>
-            <p className="text-[10px] text-txt-dim">
+            <p className="text-[11px] text-txt-dim">
               {state === "success" && lastGenerated
                 ? `auto-updated · ${relativeTime(lastGenerated)}`
                 : state === "error"
@@ -144,7 +144,7 @@ export function AITechnicalSummary({
             onClick={() => setRunId((n) => n + 1)}
             aria-label="Regenerate technical summary"
             title="Regenerate"
-            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-txt-muted hover:text-brand hover:bg-brand-light transition-colors"
+            className="inline-flex items-center justify-center h-10 w-10 rounded-md text-txt-muted hover:text-brand hover:bg-brand-light transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
           >
             <RefreshIcon />
           </button>
@@ -153,7 +153,7 @@ export function AITechnicalSummary({
             onClick={() => setCollapsed((c) => !c)}
             aria-label={collapsed ? "Expand summary" : "Collapse summary"}
             aria-expanded={!collapsed}
-            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-txt-muted hover:text-brand hover:bg-brand-light transition-colors"
+            className="inline-flex items-center justify-center h-10 w-10 rounded-md text-txt-muted hover:text-brand hover:bg-brand-light transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
           >
             <ChevronIcon rotated={collapsed} />
           </button>
@@ -239,7 +239,7 @@ export function AITechnicalSummary({
 
           {/* Focus areas */}
           <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border">
-            <span className="text-[10px] uppercase tracking-[0.14em] font-display font-semibold text-txt-dim mr-1">
+            <span className="text-[11px] uppercase tracking-[0.12em] font-display font-semibold text-txt-dim mr-1">
               Focus areas
             </span>
             <FocusChip
@@ -284,7 +284,7 @@ function Callout({
       style={{ background: "transparent" }}
     >
       <div
-        className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-[0.12em] mb-1 ${toneClass}`}
+        className={`inline-block px-1.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-[0.1em] mb-1 ${toneClass}`}
       >
         {label}
       </div>

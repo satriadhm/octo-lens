@@ -203,8 +203,8 @@ function StepIcon({
  * @param params.text       The final text to stream out.
  * @param params.stepCount  How many agent steps to walk through before streaming.
  * @param params.stepDelay  ms between step advances (default 450).
- * @param params.charDelay  ms between streamed chunks (default 14).
- * @param params.chunkSize  chars revealed per tick (default 3).
+ * @param params.charDelay  ms between streamed chunks (default 20).
+ * @param params.chunkSize  chars revealed per tick (default 6).
  * @param params.onStep     Called when currentStep advances.
  * @param params.onChunk    Called with the partially streamed text.
  * @param params.onState    Called when the lifecycle state changes.
@@ -223,8 +223,8 @@ export function streamSimulate(params: {
     text,
     stepCount,
     stepDelay = 450,
-    charDelay = 14,
-    chunkSize = 3,
+    charDelay = 20,
+    chunkSize = 6,
     onStep,
     onChunk,
     onState,

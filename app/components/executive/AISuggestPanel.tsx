@@ -211,7 +211,7 @@ function PanelShell({
       <header className="flex items-start justify-between gap-3 mb-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-display font-semibold uppercase tracking-[0.14em] text-brand">
+            <span className="text-[11px] font-display font-semibold uppercase tracking-[0.12em] text-brand">
               AI Suggest Panel
             </span>
             {state === "success" && (
@@ -230,7 +230,7 @@ function PanelShell({
           onClick={onRefresh}
           aria-label="Regenerate suggestion"
           title="Regenerate"
-          className="shrink-0 inline-flex items-center justify-center h-7 w-7 rounded-md border border-border text-txt-muted hover:text-brand hover:border-brand/40 transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
+          className="shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-md border border-border text-txt-muted hover:text-brand hover:border-brand/40 transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
         >
           <RefreshIcon />
         </button>
@@ -283,7 +283,7 @@ function LayerCard({
         >
           {icon}
         </span>
-        <span className="text-[10px] font-display font-semibold uppercase tracking-[0.14em] text-txt-muted">
+        <span className="text-[11px] font-display font-semibold uppercase tracking-[0.12em] text-txt-muted">
           {title}
         </span>
       </div>
@@ -313,7 +313,7 @@ function ActionRow({
         onClick={onToggle}
         aria-pressed={checked}
         aria-label={checked ? "Mark as unacknowledged" : "Acknowledge action"}
-        className={`mt-0.5 shrink-0 w-4 h-4 rounded border transition-colors flex items-center justify-center ${
+        className={`mt-0.5 shrink-0 w-11 h-11 rounded border transition-colors flex items-center justify-center ${
           checked
             ? "bg-brand border-brand text-white"
             : "bg-surface border-border hover:border-brand/40"

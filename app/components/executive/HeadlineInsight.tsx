@@ -48,19 +48,22 @@ export function HeadlineInsight({ enriched }: HeadlineInsightProps) {
       className="relative overflow-hidden rounded-2xl text-white shadow-[0_10px_30px_-12px_rgba(139,0,0,0.6)]"
       style={{
         background:
-          "linear-gradient(135deg, #8B0000 0%, #A50F24 45%, #C8102E 100%)",
+          "linear-gradient(135deg, color-mix(in oklch, var(--color-brand) 75%, black) 0%, color-mix(in oklch, var(--color-brand) 88%, var(--color-danger)) 45%, var(--color-danger) 100%)",
       }}
       aria-label="Portfolio headline insight"
     >
       <div
         className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full opacity-30 blur-2xl"
-        style={{ background: "radial-gradient(circle, #ffffff, transparent 70%)" }}
+        style={{
+          background:
+            "radial-gradient(circle, color-mix(in oklch, white 86%, transparent), transparent 70%)",
+        }}
         aria-hidden
       />
       <div className="relative flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-display font-semibold uppercase tracking-[0.18em] text-white/70">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-white/70">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-status-pulse" />
               AI Headline · Live
             </span>
@@ -69,7 +72,7 @@ export function HeadlineInsight({ enriched }: HeadlineInsightProps) {
               onClick={() => setRunId((n) => n + 1)}
               aria-label="Regenerate headline"
               title="Regenerate headline"
-              className="ml-auto lg:hidden inline-flex items-center justify-center h-6 w-6 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white/80"
+              className="ml-auto lg:hidden inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white/80 focus-visible:outline-2 focus-visible:outline-white/60"
             >
               <RefreshIcon />
             </button>
@@ -112,7 +115,7 @@ export function HeadlineInsight({ enriched }: HeadlineInsightProps) {
             onClick={() => setRunId((n) => n + 1)}
             aria-label="Regenerate headline"
             title="Regenerate headline"
-            className="hidden lg:inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white/80"
+              className="hidden lg:inline-flex items-center justify-center h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white/80 focus-visible:outline-2 focus-visible:outline-white/60"
           >
             <RefreshIcon />
           </button>
