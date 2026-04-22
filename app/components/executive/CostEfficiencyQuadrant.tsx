@@ -77,7 +77,7 @@ export function CostEfficiencyQuadrant({
             y1={yMid}
             y2={yMax}
             fill="color-mix(in oklch, var(--color-danger) 28%, transparent)"
-            fillOpacity={0.09}
+            fillOpacity={0.045}
             stroke="none"
             ifOverflow="visible"
           />
@@ -87,7 +87,7 @@ export function CostEfficiencyQuadrant({
             y1={yMid}
             y2={yMax}
             fill="color-mix(in oklch, var(--color-ok) 28%, transparent)"
-            fillOpacity={0.09}
+            fillOpacity={0.045}
             stroke="none"
             ifOverflow="visible"
           />
@@ -97,7 +97,7 @@ export function CostEfficiencyQuadrant({
             y1={0}
             y2={yMid}
             fill="color-mix(in oklch, var(--color-txt-dim) 22%, transparent)"
-            fillOpacity={0.07}
+            fillOpacity={0.035}
             stroke="none"
             ifOverflow="visible"
           />
@@ -107,7 +107,7 @@ export function CostEfficiencyQuadrant({
             y1={0}
             y2={yMid}
             fill="color-mix(in oklch, var(--color-alert) 30%, transparent)"
-            fillOpacity={0.1}
+            fillOpacity={0.05}
             stroke="none"
             ifOverflow="visible"
           />
@@ -212,11 +212,12 @@ export function CostEfficiencyQuadrant({
         </div>
       </div>
 
-      <div className="mt-3 border-t border-border pt-3">
-        <p className="text-[11px] text-txt-dim mb-2">
-          Keyboard selection fallback
-        </p>
-        <div className="flex flex-wrap gap-2">
+      <details className="mt-3 border-t border-border pt-2 group">
+        <summary className="cursor-pointer list-none text-[11px] text-txt-dim hover:text-txt py-2 select-none [&::-webkit-details-marker]:hidden flex items-center gap-1.5 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-txt-dim/50 group-open:before:bg-brand">
+          <span className="font-medium">Select application</span>
+          <span className="text-txt-dim/80 font-normal">(list)</span>
+        </summary>
+        <div className="flex flex-wrap gap-2 pb-1 pt-1">
           {data.map((d) => {
             const isSelected = d.app.id === selectedId;
             return (
@@ -236,7 +237,7 @@ export function CostEfficiencyQuadrant({
             );
           })}
         </div>
-      </div>
+      </details>
     </div>
   );
 }
@@ -249,14 +250,14 @@ function QuadrantLabel({
   tone: "danger" | "ok" | "warn" | "muted";
 }) {
   const colorMap = {
-    danger: "text-danger/50",
-    ok: "text-ok/55",
-    warn: "text-alert/55",
-    muted: "text-txt-dim/60",
+    danger: "text-danger/35",
+    ok: "text-ok/40",
+    warn: "text-alert/38",
+    muted: "text-txt-dim/45",
   } as const;
   return (
     <span
-      className={`text-[11px] font-display font-bold tracking-[0.14em] uppercase ${colorMap[tone]}`}
+      className={`text-[10px] font-semibold tracking-[0.06em] uppercase ${colorMap[tone]}`}
     >
       {children}
     </span>
@@ -273,7 +274,7 @@ function QuadrantTooltip({
   if (!active || !payload?.[0]?.payload) return null;
   const p = payload[0].payload;
   return (
-    <div className="bg-surface border border-border rounded-lg shadow-lg px-3 py-2.5 text-[11px] min-w-[200px]">
+    <div className="bg-surface border border-border rounded-lg shadow-md px-3 py-2.5 text-[11px] min-w-[200px]">
       <div className="flex items-center gap-2 mb-1.5">
         <span
           className="inline-block w-2 h-2 rounded-full"

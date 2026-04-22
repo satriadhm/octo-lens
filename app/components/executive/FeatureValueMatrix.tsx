@@ -111,7 +111,7 @@ export function FeatureValueMatrix({
     sortKey === key ? (sortDir === "asc" ? " \u2191" : " \u2193") : "";
 
   return (
-    <section className="bg-surface border border-border rounded-2xl overflow-hidden">
+    <section className="bg-surface border border-border rounded-xl overflow-hidden">
       <header className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-border">
         <div>
           <h2 className="text-sm font-display font-bold text-txt">
@@ -123,51 +123,34 @@ export function FeatureValueMatrix({
               : `Semua fitur di ${apps.length} aplikasi`}
           </p>
         </div>
-        <span className="text-[10px] font-display font-semibold uppercase tracking-[0.14em] text-txt-dim">
+        <span className="text-[11px] font-medium text-txt-dim tabular-nums">
           {sorted.length} features
         </span>
       </header>
 
       {/* Summary row */}
-      <div
-        className="px-5 py-3 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
-        style={{
-          background:
-            "linear-gradient(90deg, color-mix(in oklch, var(--color-foreground) 90%, transparent) 0%, color-mix(in oklch, var(--color-brand) 40%, var(--color-foreground)) 100%)",
-        }}
-      >
-        <div className="flex items-center gap-2.5">
-          <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-white/15 text-white">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-            >
-              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
-              <path d="M12 9v4" />
-              <path d="M12 17h.01" />
-            </svg>
-          </span>
-          <p className="text-xs sm:text-sm font-display font-semibold leading-tight">
-            {zombies.length > 0
-              ? `${zombies.length} zombie candidate${zombies.length > 1 ? "s" : ""} found`
-              : "Tidak ada fitur zombie pada saat ini"}
-            {zombies.length > 0 && (
-              <span className="font-normal text-white/80">
-                {" "}· estimasi {idr(zombieIDR)} terinvestasi di fitur yang
+      <div className="px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border bg-surface-dim/60">
+        <p className="text-xs sm:text-sm text-txt leading-snug max-w-[65ch]">
+          {zombies.length > 0 ? (
+            <>
+              <span className="font-semibold text-txt">
+                {zombies.length} zombie candidate{zombies.length > 1 ? "s" : ""}{" "}
+                found
+              </span>
+              <span className="text-txt-muted">
+                {" "}
+                · estimasi {idr(zombieIDR)} terinvestasi di fitur yang
                 underutilized
               </span>
-            )}
-          </p>
-        </div>
+            </>
+          ) : (
+            <span className="text-txt-muted">
+              Tidak ada fitur zombie pada saat ini
+            </span>
+          )}
+        </p>
         {zombies.length > 0 && (
-          <span className="text-[11px] font-semibold tracking-wide uppercase bg-white/15 px-2 py-1 rounded-md">
+          <span className="text-[11px] font-medium text-txt-muted shrink-0">
             Review quarterly
           </span>
         )}

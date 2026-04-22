@@ -27,41 +27,11 @@ export function AISuggestPanel({ app }: AISuggestPanelProps) {
 
 function EmptyState() {
   return (
-    <div className="h-full flex flex-col items-center justify-center text-center gap-3 p-6 min-h-[320px] border border-dashed border-border rounded-2xl bg-surface-dim/30">
-      <div
-        className="w-14 h-14 rounded-2xl bg-brand-light flex items-center justify-center text-brand"
-        aria-hidden
-      >
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 2v2" />
-          <path d="M12 20v2" />
-          <path d="m4.93 4.93 1.41 1.41" />
-          <path d="m17.66 17.66 1.41 1.41" />
-          <path d="M2 12h2" />
-          <path d="M20 12h2" />
-          <path d="m4.93 19.07 1.41-1.41" />
-          <path d="m17.66 6.34 1.41-1.41" />
-          <circle cx="12" cy="12" r="4" />
-        </svg>
-      </div>
-      <div>
-        <p className="text-sm font-display font-semibold text-txt">
-          AI Suggest Panel
-        </p>
-        <p className="text-xs text-txt-muted max-w-[280px] leading-relaxed mt-1">
-          Click any application bubble in the chart to see AI recommendations
-          tailored to that workload.
-        </p>
-      </div>
+    <div className="h-full flex flex-col items-center justify-center text-center gap-2 p-6 min-h-[320px] border border-dashed border-border rounded-xl bg-surface-dim/20">
+      <p className="text-sm font-semibold text-txt">Suggestions</p>
+      <p className="text-xs text-txt-muted max-w-[260px] leading-relaxed">
+        Select an application in the chart to see tailored recommendations.
+      </p>
     </div>
   );
 }
@@ -146,36 +116,21 @@ function SelectedState({ app }: { app: App }) {
     >
       <div className="flex flex-col gap-3">
         {visibleLayers >= 1 && (
-          <LayerCard
-            key="l1"
-            title="What's happening"
-            tone="info"
-            icon={<InfoIcon />}
-          >
+          <LayerCard key="l1" title="What's happening">
             <p className="text-xs text-txt leading-relaxed">
               {suggestion.whatHappening}
             </p>
           </LayerCard>
         )}
         {visibleLayers >= 2 && (
-          <LayerCard
-            key="l2"
-            title="Why it matters"
-            tone="warn"
-            icon={<WarnIcon />}
-          >
+          <LayerCard key="l2" title="Why it matters">
             <p className="text-xs text-txt leading-relaxed">
               {suggestion.whyMatters}
             </p>
           </LayerCard>
         )}
         {visibleLayers >= 3 && (
-          <LayerCard
-            key="l3"
-            title="Recommended actions"
-            tone="action"
-            icon={<ActionIcon />}
-          >
+          <LayerCard key="l3" title="Recommended actions">
             <ul className="flex flex-col gap-2">
               {suggestion.actions.map((a, i) => (
                 <ActionRow
@@ -207,12 +162,12 @@ function PanelShell({
   footerNote?: string;
 }) {
   return (
-    <div className="flex flex-col bg-surface border border-border rounded-2xl p-5 min-h-[320px]">
+    <div className="flex flex-col bg-surface border border-border rounded-xl p-4 min-h-[320px]">
       <header className="flex items-start justify-between gap-3 mb-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-display font-semibold uppercase tracking-[0.12em] text-brand">
-              AI Suggest Panel
+            <span className="text-[11px] font-medium text-txt-dim">
+              Suggestions
             </span>
             {state === "success" && (
               <span
@@ -253,40 +208,14 @@ function PanelShell({
 
 function LayerCard({
   title,
-  tone,
-  icon,
   children,
 }: {
   title: string;
-  tone: "info" | "warn" | "action";
-  icon: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const toneClass = {
-    info: "bg-brand-light/50 border-brand/15",
-    warn: "bg-alert-dim/60 border-alert/20",
-    action: "bg-surface-dim border-border",
-  }[tone];
-  const iconToneClass = {
-    info: "bg-brand/15 text-brand",
-    warn: "bg-alert/15 text-alert",
-    action: "bg-ok/15 text-ok",
-  }[tone];
   return (
-    <div
-      className={`animate-layer-fade-in rounded-xl border p-3.5 ${toneClass}`}
-    >
-      <div className="flex items-center gap-2 mb-2">
-        <span
-          className={`inline-flex items-center justify-center w-5 h-5 rounded-md ${iconToneClass}`}
-          aria-hidden
-        >
-          {icon}
-        </span>
-        <span className="text-[11px] font-display font-semibold uppercase tracking-[0.12em] text-txt-muted">
-          {title}
-        </span>
-      </div>
+    <div className="animate-layer-fade-in rounded-lg border border-border bg-surface-dim/25 p-3">
+      <div className="text-[11px] font-semibold text-txt-dim mb-2">{title}</div>
       {children}
     </div>
   );
@@ -350,61 +279,6 @@ function ActionRow({
         </span>
       </div>
     </li>
-  );
-}
-
-function InfoIcon() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 8h.01" />
-      <path d="M11 12h1v4h1" />
-    </svg>
-  );
-}
-
-function WarnIcon() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
-      <path d="M12 9v4" />
-      <path d="M12 17h.01" />
-    </svg>
-  );
-}
-
-function ActionIcon() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
   );
 }
 
