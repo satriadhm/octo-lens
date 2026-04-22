@@ -21,14 +21,10 @@ const STEPS = [
 
 function buildExecSummary(enriched: EnrichedApp[]): string {
   const total = enriched.length;
-  const healthy = enriched.filter(
-    (a) => a.budget.level === "SAFE" && a.app.ux.score >= 50,
-  ).length;
+  const healthy = enriched.filter((a) => a.budget.level === "SAFE").length;
   const budgetAlerts = enriched.filter((a) => a.budget.level !== "SAFE").length;
-  const worst = [...enriched].sort(
-    (a, b) => a.app.ux.score - b.app.ux.score,
-  )[0];
-  return `Portofolio IT menunjukkan kondisi anggaran yang beragam, dengan ${healthy} dari ${total} aplikasi dalam status sehat. ${worst.app.name} memerlukan perhatian segera karena tekanan anggaran dan pengalaman pengguna terendah di angka ${worst.app.ux.score}. Terdapat ${budgetAlerts} aplikasi dengan risiko overrun anggaran yang perlu dipantau ketat. Rekomendasi: prioritaskan stabilisasi ${worst.app.name} dan perketat kontrol anggaran untuk aplikasi berstatus WARNING.`;
+  const worst = [...enriched].sort((a, b) => b.budget.pct - a.budget.pct)[0];
+  return `Portofolio IT menunjukkan kondisi anggaran yang beragam, dengan ${healthy} dari ${total} aplikasi dalam status sehat. ${worst.app.name} memerlukan perhatian segera karena utilisasi anggaran tertinggi di ${worst.budget.pct}%. Terdapat ${budgetAlerts} aplikasi dengan risiko overrun anggaran yang perlu dipantau ketat. Rekomendasi: prioritaskan stabilisasi ${worst.app.name} dan perketat kontrol anggaran untuk aplikasi berstatus WARNING.`;
 }
 
 export function AISummary({ enriched }: AISummaryProps) {

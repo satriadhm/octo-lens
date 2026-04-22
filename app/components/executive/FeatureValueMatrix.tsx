@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type {
   App,
   ApiEndpoint,
@@ -39,6 +39,8 @@ const TREND_ORDER: Record<FeatureTrend, number> = {
   dead: 4,
 };
 
+const PAGE_SIZE = 15;
+
 export function FeatureValueMatrix({
   apps,
   selectedApp,
@@ -63,6 +65,7 @@ export function FeatureValueMatrix({
   const [sortKey, setSortKey] = useState<SortKey>("classification");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const sorted = useMemo(() => {
     const dir = sortDir === "asc" ? 1 : -1;
@@ -92,6 +95,27 @@ export function FeatureValueMatrix({
       }
     });
   }, [rows, sortKey, sortDir]);
+
+  const totalPages =
+    sorted.length === 0 ? 0 : Math.ceil(sorted.length / PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [sortKey, sortDir, selectedApp?.id, apps.length]);
+
+  useEffect(() => {
+    if (totalPages === 0) return;
+    setPage((p) => Math.min(Math.max(1, p), totalPages));
+  }, [totalPages]);
+
+  useEffect(() => {
+    setExpanded(null);
+  }, [page]);
+
+  const pageRows = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return sorted.slice(start, start + PAGE_SIZE);
+  }, [sorted, page]);
 
   const zombies = rows.filter(
     (r) => r.investment.classification === "ZOMBIE CANDIDATE",
@@ -157,7 +181,7 @@ export function FeatureValueMatrix({
       </div>
 
       <div className="block md:hidden px-3 py-3 space-y-2">
-        {sorted.map((row) => {
+        {pageRows.map((row) => {
           const rowKey = `${row.app.id}-${row.investment.path}`;
           const isOpen = expanded === rowKey;
           return (
@@ -252,7 +276,7 @@ export function FeatureValueMatrix({
             </tr>
           </thead>
           <tbody>
-            {sorted.map((row) => {
+            {pageRows.map((row) => {
               const rowKey = `${row.app.id}-${row.investment.path}`;
               const isOpen = expanded === rowKey;
               return (
@@ -278,6 +302,40 @@ export function FeatureValueMatrix({
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <footer className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-3 border-t border-border bg-surface-dim/40">
+          <p className="text-[11px] text-txt-muted tabular-nums">
+            Menampilkan{" "}
+            <span className="font-medium text-txt">
+              {(page - 1) * PAGE_SIZE + 1}–
+              {Math.min(page * PAGE_SIZE, sorted.length)}
+            </span>{" "}
+            dari {sorted.length} fitur
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="h-9 px-3 rounded-md border border-border text-[11px] font-semibold text-txt hover:bg-surface disabled:opacity-40 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-brand/40"
+            >
+              Sebelumnya
+            </button>
+            <span className="text-[11px] text-txt-muted tabular-nums px-1">
+              Halaman {page} / {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="h-9 px-3 rounded-md border border-border text-[11px] font-semibold text-txt hover:bg-surface disabled:opacity-40 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-brand/40"
+            >
+              Berikutnya
+            </button>
+          </div>
+        </footer>
+      )}
     </section>
   );
 }

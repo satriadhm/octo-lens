@@ -32,21 +32,6 @@ export interface AppBudget {
   history: number[];
 }
 
-export interface FeatureScore {
-  f: string;
-  s: number;
-}
-
-export interface AppUX {
-  score: number;
-  history: number[];
-  feedbackPos: number;
-  feedbackTotal: number;
-  byFeature: FeatureScore[];
-  hourlyDrop: number | null;
-  themes: string[];
-}
-
 export interface ApiEndpoint {
   path: string;
   calls: number;
@@ -97,7 +82,6 @@ export interface App {
   value: AppValue;
   metrics: AppMetrics;
   budget: AppBudget;
-  ux: AppUX;
   api: AppApi;
   infra?: AppInfra;
   featureInvestments?: FeatureInvestment[];

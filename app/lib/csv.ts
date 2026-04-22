@@ -36,7 +36,6 @@ function executiveRows(enriched: EnrichedApp[]): ExportRow[] {
       "Budget %",
       "Budget Projection (M)",
       "Budget Level",
-      "UX Score",
     ],
     ...enriched.map((entry) => [
       entry.app.name,
@@ -47,7 +46,6 @@ function executiveRows(enriched: EnrichedApp[]): ExportRow[] {
       entry.budget.pct ?? budgetPct(entry.budget.spent, entry.budget.total),
       entry.budget.proj,
       entry.budget.level,
-      entry.app.ux.score,
     ]),
   ];
 }
@@ -65,7 +63,6 @@ function opsRows(enriched: EnrichedApp[]): ExportRow[] {
       "Uptime %",
       "Budget Level",
       "Budget %",
-      "UX Score",
     ],
     ...enriched.map((entry) => [
       entry.app.name,
@@ -78,7 +75,6 @@ function opsRows(enriched: EnrichedApp[]): ExportRow[] {
       entry.app.metrics.uptime,
       entry.budget.level,
       entry.budget.pct ?? budgetPct(entry.budget.spent, entry.budget.total),
-      entry.app.ux.score,
     ]),
   ];
 }

@@ -31,7 +31,7 @@ const NAV_ITEMS: NavItem[] = [
       { id: "exec-kpis", label: "KPI Summary" },
       { id: "exec-budget", label: "Budget Health" },
       { id: "exec-risks", label: "Top Risks" },
-      { id: "exec-ux", label: "UX & Adoption" },
+      { id: "exec-features", label: "Features & adoption" },
     ],
   },
   {

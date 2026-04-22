@@ -26,7 +26,6 @@ import { SourceTag } from "@/app/components/shared/SourceTag";
 import { UsageHeatmap } from "@/app/components/ops/UsageHeatmap";
 import {
   rtColor,
-  uxColor,
   errorRateColor,
   formatForPersona,
 } from "@/app/lib/utils";
@@ -41,8 +40,14 @@ interface OpsViewProps {
   onSelect: (app: App) => void;
 }
 
-type SortKey = "name" | "mau" | "response" | "uptime" | "budgetPct" | "ux" | "totalReq" | "p95" | "errorRate";
+type SortKey = "name" | "mau" | "response" | "uptime" | "budgetPct" | "totalReq" | "p95" | "errorRate";
 type SortDir = "asc" | "desc";
+
+function uptimeBarColor(uptime: number): string {
+  if (uptime >= 99) return "var(--color-green)";
+  if (uptime >= 97) return "var(--color-amber)";
+  return "var(--color-red)";
+}
 
 function formatBytes(bytes: number | undefined): string {
   if (!bytes) return "-";
@@ -256,7 +261,6 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
         case "response": return (a.app.metrics.responseMs - b.app.metrics.responseMs) * dir;
         case "uptime": return (a.app.metrics.uptime - b.app.metrics.uptime) * dir;
         case "budgetPct": return (a.budget.pct - b.budget.pct) * dir;
-        case "ux": return (a.app.ux.score - b.app.ux.score) * dir;
         case "totalReq":
           return (
             ((a.app.metrics.totalRequests ?? a.app.api.totalReqs) -
@@ -289,7 +293,6 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
     { key: "uptime", label: "Uptime", sortable: true },
     { key: "budgetPct", label: "Budget %", sortable: true },
     { key: "", label: "Budget", sortable: false },
-    { key: "ux", label: "UX", sortable: true },
     { key: "", label: "", sortable: false },
   ];
 
@@ -366,7 +369,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
         ))}
       </div>
 
-      <SectionHeader title="Service Health" subtitle="Response time and UX scores across all applications" />
+      <SectionHeader title="Service Health" subtitle="Response time and uptime across all applications" />
 
       {/* Charts row */}
       <div id="ops-service-health" className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6 animate-fade-in-up stagger-2">
@@ -413,10 +416,10 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
         </Card>
 
         <Card>
-          <Label>UX Health Score per Application</Label>
+          <Label>Uptime per Application</Label>
           <div className="flex flex-col gap-2.5 mt-3">
             {[...enriched]
-              .sort((a, b) => b.app.ux.score - a.app.ux.score)
+              .sort((a, b) => b.app.metrics.uptime - a.app.metrics.uptime)
               .map((e) => (
                 <div
                   key={e.app.id}
@@ -438,17 +441,17 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
                     <div
                       className="h-full rounded-full transition-[width] duration-500"
                       style={{
-                        background: uxColor(e.app.ux.score),
-                        width: `${e.app.ux.score}%`,
+                        background: uptimeBarColor(e.app.metrics.uptime),
+                        width: `${e.app.metrics.uptime}%`,
                         opacity: 0.75,
                       }}
                     />
                   </div>
                   <span
-                    className="text-xs font-mono font-semibold min-w-[30px] text-right tabular-nums"
-                    style={{ color: uxColor(e.app.ux.score) }}
+                    className="text-xs font-mono font-semibold min-w-[44px] text-right tabular-nums"
+                    style={{ color: uptimeBarColor(e.app.metrics.uptime) }}
                   >
-                    {e.app.ux.score}
+                    {e.app.metrics.uptime}%
                   </span>
                 </div>
               ))}
@@ -582,24 +585,6 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
                       color={e.budget.levelColor}
                       bg={`color-mix(in oklch, ${e.budget.levelColor} 10%, transparent)`}
                     />
-                  </td>
-                  {/* UX */}
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <div className="w-12 bg-surface-dim rounded-full h-1.5 flex-shrink-0">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            background: uxColor(e.app.ux.score),
-                            width: `${e.app.ux.score}%`,
-                            opacity: 0.75,
-                          }}
-                        />
-                      </div>
-                      <span className="text-txt-muted font-mono text-[11px] font-semibold tabular-nums">
-                        {e.app.ux.score}
-                      </span>
-                    </div>
                   </td>
                   {/* Arrow */}
                   <td

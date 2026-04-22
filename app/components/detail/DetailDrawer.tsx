@@ -19,12 +19,6 @@ type TabId = (typeof TABS)[number];
 export function DetailDrawer({ app, budget, onClose }: DetailDrawerProps) {
   const [tab, setTab] = useState<TabId>("overview");
   const drawerRef = useRef<HTMLDivElement>(null);
-  const uxColor =
-    app.ux.score >= 70
-      ? "var(--color-green)"
-      : app.ux.score >= 50
-        ? "var(--color-amber)"
-        : "var(--color-red)";
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -58,11 +52,6 @@ export function DetailDrawer({ app, budget, onClose }: DetailDrawerProps) {
               label={budget.level}
               color={budget.levelColor}
               bg={`color-mix(in oklch, ${budget.levelColor} 10%, transparent)`}
-            />
-            <Pill
-              label={`UX ${app.ux.score}`}
-              color={uxColor}
-              bg={`color-mix(in oklch, ${uxColor} 10%, transparent)`}
             />
           </div>
         </div>

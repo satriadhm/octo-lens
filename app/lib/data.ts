@@ -65,22 +65,6 @@ export const APPS: App[] = [
       months: 12,
       history: [310, 325, 318, 340, 352, 368, 355, 374, 388, 401].map((v) => v * 1000000),
     },
-    ux: {
-      score: 78,
-      history: [71, 73, 75, 74, 77, 78, 76, 79, 78, 78],
-      feedbackPos: 7800,
-      feedbackTotal: 10000,
-      byFeature: [
-        { f: "Transfer", s: 84 },
-        { f: "Login", s: 76 },
-        { f: "Saldo", s: 91 },
-        { f: "Bayar", s: 73 },
-        { f: "KPR Apply", s: 31 },
-        { f: "Investasi", s: 65 },
-      ],
-      hourlyDrop: 22,
-      themes: [],
-    },
     api: {
       totalReqs: 2340000,
       endpoints: [
@@ -178,22 +162,6 @@ export const APPS: App[] = [
         (v) => v * 1000000,
       ),
     },
-    ux: {
-      score: 63,
-      history: [66, 65, 64, 63, 62, 63, 64, 62, 63, 63],
-      feedbackPos: 3780,
-      feedbackTotal: 6000,
-      byFeature: [
-        { f: "Transfer", s: 70 },
-        { f: "Login", s: 61 },
-        { f: "Saldo", s: 79 },
-        { f: "Bayar", s: 67 },
-        { f: "Laporan", s: 54 },
-        { f: "Ekspor", s: 48 },
-      ],
-      hourlyDrop: 1,
-      themes: [],
-    },
     api: {
       totalReqs: 890000,
       endpoints: [
@@ -288,21 +256,6 @@ export const APPS: App[] = [
       total: 4000000000,
       months: 12,
       history: [380, 420, 445, 480, 510, 545, 580, 620].map((v) => v * 1000000),
-    },
-    ux: {
-      score: 34,
-      history: [42, 40, 38, 37, 35, 34, 33, 34, 34, 34],
-      feedbackPos: 840,
-      feedbackTotal: 2500,
-      byFeature: [
-        { f: "Simulasi", s: 58 },
-        { f: "Pengajuan", s: 22 },
-        { f: "Upload Dok", s: 19 },
-        { f: "Tracking", s: 41 },
-        { f: "E-Sign", s: 28 },
-      ],
-      hourlyDrop: 14,
-      themes: [],
     },
     api: {
       totalReqs: 48000,
@@ -402,20 +355,6 @@ export const APPS: App[] = [
         99, 100,
       ].map((v) => v * 1000000),
     },
-    ux: {
-      score: 69,
-      history: [65, 66, 67, 68, 69, 70, 69, 70, 69, 69],
-      feedbackPos: 2760,
-      feedbackTotal: 4000,
-      byFeature: [
-        { f: "Approval", s: 75 },
-        { f: "Rekonsiliasi", s: 66 },
-        { f: "Laporan", s: 72 },
-        { f: "User Mgmt", s: 61 },
-      ],
-      hourlyDrop: null,
-      themes: [],
-    },
     api: {
       totalReqs: 120000,
       endpoints: [
@@ -491,20 +430,6 @@ export const APPS: App[] = [
       total: 8000000000,
       months: 12,
       history: [580, 610, 595, 620, 640, 650].map((v) => v * 1000000),
-    },
-    ux: {
-      score: 82,
-      history: [78, 79, 80, 81, 81, 82, 82, 83, 82, 82],
-      feedbackPos: 1230,
-      feedbackTotal: 1500,
-      byFeature: [
-        { f: "Trading", s: 85 },
-        { f: "Settlement", s: 82 },
-        { f: "Risk Monitor", s: 88 },
-        { f: "Reporting", s: 76 },
-      ],
-      hourlyDrop: null,
-      themes: [],
     },
     api: {
       totalReqs: 680000,

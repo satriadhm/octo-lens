@@ -29,12 +29,8 @@ export function ExecutiveView({
 
   const portfolio = {
     total: enriched.length,
-    healthy: enriched.filter(
-      (a) => a.budget.level === "SAFE" && a.app.ux.score >= 50,
-    ).length,
-    atRisk: enriched.filter(
-      (a) => a.budget.level === "WARNING" || a.app.ux.score < 50,
-    ).length,
+    healthy: enriched.filter((a) => a.budget.level === "SAFE").length,
+    atRisk: enriched.filter((a) => a.budget.level === "WARNING").length,
     critical: enriched.filter((a) => a.budget.level === "CRITICAL").length,
     budgetAlerts: enriched.filter((a) => a.budget.level !== "SAFE").length,
   };
@@ -42,9 +38,7 @@ export function ExecutiveView({
   const riskApps = enriched
     .filter(
       (e) =>
-        e.budget.level !== "SAFE" ||
-        e.app.ux.score < 50 ||
-        e.app.metrics.responseMs > 700,
+        e.budget.level !== "SAFE" || e.app.metrics.responseMs > 700,
     )
     .slice(0, 4);
 
@@ -52,7 +46,7 @@ export function ExecutiveView({
     portfolio.critical > 0
       ? `${portfolio.critical} app${portfolio.critical > 1 ? "s" : ""} in critical budget state — needs immediate attention`
       : portfolio.atRisk > 0
-        ? `${portfolio.atRisk} app${portfolio.atRisk > 1 ? "s" : ""} at risk based on budget or UX`
+        ? `${portfolio.atRisk} app${portfolio.atRisk > 1 ? "s" : ""} at risk based on budget`
         : "All applications remain within budget health targets";
 
   const apps = enriched.map((e) => e.app);
