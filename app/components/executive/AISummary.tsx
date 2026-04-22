@@ -39,9 +39,6 @@ export function AISummary({ enriched }: AISummaryProps) {
 
   useEffect(() => {
     const text = buildExecSummary(enriched);
-    setState("loading");
-    setStep(0);
-    setStreamed("");
     const cancel = streamSimulate({
       text,
       stepCount: STEPS.length,

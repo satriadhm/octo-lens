@@ -233,8 +233,15 @@ export function streamSimulate(params: {
   let cancelled = false;
   const timers: ReturnType<typeof setTimeout>[] = [];
 
-  onState?.("loading");
-  onStep?.(0);
+  // Kick off the lifecycle on a microtask so any callback-driven setState calls
+  // do not happen synchronously inside the subscribing effect body.
+  const bootstrap = setTimeout(() => {
+    if (cancelled) return;
+    onChunk?.("");
+    onStep?.(0);
+    onState?.("loading");
+  }, 0);
+  timers.push(bootstrap);
 
   for (let i = 1; i <= stepCount; i++) {
     const t = setTimeout(() => {

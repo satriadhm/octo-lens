@@ -22,7 +22,7 @@ const STEPS = [
 
 export function AISuggestPanel({ app }: AISuggestPanelProps) {
   if (!app) return <EmptyState />;
-  return <SelectedState app={app} />;
+  return <SelectedState key={app.id} app={app} />;
 }
 
 function EmptyState() {
@@ -75,14 +75,8 @@ function SelectedState({ app }: { app: App }) {
   const [acked, setAcked] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    setAcked(new Set());
-  }, [app.id]);
-
-  useEffect(() => {
-    setState("loading");
-    setStep(0);
-    setVisibleLayers(0);
-
+    const layerTimers: ReturnType<typeof setTimeout>[] = [];
+    layerTimers.push(setTimeout(() => setVisibleLayers(0), 0));
     const cancel = streamSimulate({
       text: "",
       stepCount: STEPS.length,
@@ -94,17 +88,19 @@ function SelectedState({ app }: { app: App }) {
       onState: (s) => {
         if (s === "streaming") {
           setState("streaming");
-          // Reveal the three layers one after another
-          setTimeout(() => setVisibleLayers(1), 80);
-          setTimeout(() => setVisibleLayers(2), 520);
-          setTimeout(() => setVisibleLayers(3), 980);
-          setTimeout(() => setState("success"), 1300);
+          layerTimers.push(setTimeout(() => setVisibleLayers(1), 80));
+          layerTimers.push(setTimeout(() => setVisibleLayers(2), 520));
+          layerTimers.push(setTimeout(() => setVisibleLayers(3), 980));
+          layerTimers.push(setTimeout(() => setState("success"), 1300));
         } else {
           setState(s);
         }
       },
     });
-    return cancel;
+    return () => {
+      cancel();
+      layerTimers.forEach(clearTimeout);
+    };
   }, [app.id, runId]);
 
   const toggleAck = (i: number) => {

@@ -28,9 +28,6 @@ export function HeadlineInsight({ enriched }: HeadlineInsightProps) {
   const [runId, setRunId] = useState(0);
 
   useEffect(() => {
-    setState("loading");
-    setStep(0);
-    setStreamed("");
     const cancel = streamSimulate({
       text: headline.sentence,
       stepCount: STEPS.length,

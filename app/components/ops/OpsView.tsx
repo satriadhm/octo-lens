@@ -24,7 +24,12 @@ import { MethodBadge } from "@/app/components/shared/MethodBadge";
 import { StatusBadge } from "@/app/components/shared/StatusBadge";
 import { SourceTag } from "@/app/components/shared/SourceTag";
 import { UsageHeatmap } from "@/app/components/ops/UsageHeatmap";
-import { rtColor, uxColor, errorRateColor } from "@/app/lib/utils";
+import {
+  rtColor,
+  uxColor,
+  errorRateColor,
+  formatForPersona,
+} from "@/app/lib/utils";
 import { SectionHeader } from "@/app/components/shared/SectionHeader";
 import {
   AITechnicalSummary,
@@ -316,6 +321,17 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
           </h1>
           <p className="text-sm text-txt-muted">
             Real-time application health and performance metrics
+          </p>
+          <p className="text-xs text-txt-dim mt-1">
+            {formatForPersona(
+              { kind: "responseMs", value: avgResponse },
+              "technical",
+            )}{" "}
+            &middot;{" "}
+            {formatForPersona(
+              { kind: "errorRate", value: weightedErrorRate },
+              "technical",
+            )}
           </p>
         </div>
         <ExportMenu

@@ -73,16 +73,14 @@ export function AITechnicalSummary({
     const force = runId > 0;
 
     if (!force && cache && cache.fingerprint === fingerprint) {
-      setStreamed(cache.text);
-      setLastGenerated(cache.generatedAt);
-      setState("success");
-      setStep(STEPS.length);
-      return;
+      const timer = setTimeout(() => {
+        setStreamed(cache.text);
+        setLastGenerated(cache.generatedAt);
+        setStep(STEPS.length);
+        setState("success");
+      }, 0);
+      return () => clearTimeout(timer);
     }
-
-    setState("loading");
-    setStep(0);
-    setStreamed("");
 
     const cancel = streamSimulate({
       text: summary.text,

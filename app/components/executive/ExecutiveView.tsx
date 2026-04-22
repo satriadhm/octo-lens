@@ -12,6 +12,7 @@ import { HeadlineInsight } from "./HeadlineInsight";
 import { CostEfficiencyQuadrant } from "./CostEfficiencyQuadrant";
 import { AISuggestPanel } from "./AISuggestPanel";
 import { FeatureValueMatrix } from "./FeatureValueMatrix";
+import { formatForPersona } from "@/app/lib/utils";
 
 interface ExecutiveViewProps {
   enriched: EnrichedApp[];
@@ -55,6 +56,13 @@ export function ExecutiveView({
         : "All applications remain within budget health targets";
 
   const apps = enriched.map((e) => e.app);
+  const avgResponseMs = Math.round(
+    enriched.reduce((sum, e) => sum + e.app.metrics.responseMs, 0) /
+      Math.max(1, enriched.length),
+  );
+  const avgErrorRate =
+    enriched.reduce((sum, e) => sum + (e.app.metrics.errorRate ?? 0), 0) /
+    Math.max(1, enriched.length);
 
   return (
     <div className="p-6 flex flex-col gap-6 overflow-y-auto h-full max-w-[1400px] mx-auto w-full">
@@ -82,6 +90,17 @@ export function ExecutiveView({
             >
               {narrativeStatus}
             </span>
+          </p>
+          <p className="text-xs text-txt-dim mt-1">
+            {formatForPersona(
+              { kind: "responseMs", value: avgResponseMs },
+              "business",
+            )}{" "}
+            &middot;{" "}
+            {formatForPersona(
+              { kind: "errorRate", value: avgErrorRate },
+              "business",
+            )}
           </p>
         </div>
         <ExportMenu
