@@ -1,94 +1,148 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { EnrichedApp } from "@/app/lib/types";
+import {
+  AgentProcessState,
+  streamSimulate,
+  type AgentState,
+} from "@/app/components/shared/AgentProcessState";
 
 interface AISummaryProps {
   enriched: EnrichedApp[];
 }
 
+const STEPS = [
+  "Reading application metrics...",
+  "Fetching budget allocation data...",
+  "Correlating usage patterns...",
+  "Generating recommendations...",
+];
+
+function buildExecSummary(enriched: EnrichedApp[]): string {
+  const total = enriched.length;
+  const healthy = enriched.filter(
+    (a) => a.budget.level === "SAFE" && a.app.ux.score >= 50,
+  ).length;
+  const budgetAlerts = enriched.filter((a) => a.budget.level !== "SAFE").length;
+  const worst = [...enriched].sort(
+    (a, b) => a.app.ux.score - b.app.ux.score,
+  )[0];
+  return `Portofolio IT menunjukkan kondisi anggaran yang beragam, dengan ${healthy} dari ${total} aplikasi dalam status sehat. ${worst.app.name} memerlukan perhatian segera karena tekanan anggaran dan pengalaman pengguna terendah di angka ${worst.app.ux.score}. Terdapat ${budgetAlerts} aplikasi dengan risiko overrun anggaran yang perlu dipantau ketat. Rekomendasi: prioritaskan stabilisasi ${worst.app.name} dan perketat kontrol anggaran untuk aplikasi berstatus WARNING.`;
+}
+
 export function AISummary({ enriched }: AISummaryProps) {
-  const [aiText, setAiText] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
+  const [state, setState] = useState<AgentState>("loading");
+  const [step, setStep] = useState(0);
+  const [streamed, setStreamed] = useState("");
+  const [runId, setRunId] = useState(0);
 
-  const portfolio = {
-    total: enriched.length,
-    healthy: enriched.filter(
-      (a) => a.budget.level === "SAFE" && a.app.ux.score >= 50,
-    ).length,
-    budgetAlerts: enriched.filter((a) => a.budget.level !== "SAFE").length,
-  };
-
-  function generateSummary() {
-    setAiLoading(true);
-    setTimeout(() => {
-      setAiText(
-        `The IT portfolio shows mixed budget health, with ${portfolio.healthy} of ${portfolio.total} applications in healthy condition. KPR Digital requires immediate attention due to critical budget pressure and the lowest UX score at 34. There are ${portfolio.budgetAlerts} applications with budget overrun risk that need close monitoring. Recommendation: prioritize KPR Digital stabilization and tighten budget control for applications with WARNING status.`,
-      );
-      setAiLoading(false);
-    }, 2000);
-  }
+  useEffect(() => {
+    const text = buildExecSummary(enriched);
+    setState("loading");
+    setStep(0);
+    setStreamed("");
+    const cancel = streamSimulate({
+      text,
+      stepCount: STEPS.length,
+      stepDelay: 360,
+      charDelay: 12,
+      chunkSize: 3,
+      onStep: setStep,
+      onChunk: setStreamed,
+      onState: setState,
+    });
+    return cancel;
+  }, [enriched, runId]);
 
   return (
-    <>
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-[11px] font-display font-semibold text-brand tracking-[0.04em] uppercase">
-          AI Executive Summary
-        </span>
-        <span className="text-[9px] font-medium text-txt-dim bg-surface-dim border border-border rounded px-1.5 py-0.5 uppercase tracking-wider">
-          Demo
-        </span>
+    <div className="relative">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-display font-semibold text-brand tracking-[0.04em] uppercase">
+            AI Executive Summary
+          </span>
+          {state === "success" && (
+            <span
+              className="inline-block w-1.5 h-1.5 rounded-full bg-ok"
+              aria-label="Analysis complete"
+            />
+          )}
+          <span className="text-[9px] font-medium text-txt-dim bg-surface-dim border border-border rounded px-1.5 py-0.5 uppercase tracking-wider">
+            Demo
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setRunId((n) => n + 1)}
+          aria-label="Regenerate summary"
+          title="Regenerate"
+          className="inline-flex items-center justify-center h-6 w-6 rounded-md text-txt-muted hover:text-brand hover:bg-brand-light transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
+        >
+          <RefreshIcon />
+        </button>
       </div>
 
-      {!aiText && !aiLoading && (
-        <div className="mt-4 flex flex-col items-center gap-3 py-4">
-          <p className="text-xs text-txt-muted text-center leading-relaxed max-w-[260px]">
-            Generate an automated portfolio summary in business language for
-            board meetings.
-          </p>
-          <button
-            onClick={generateSummary}
-            className="border border-brand rounded-lg px-5 py-2 text-brand font-semibold text-xs cursor-pointer font-sans bg-transparent hover:bg-brand-light transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
-          >
-            Generate Summary
-          </button>
-        </div>
+      {(state === "loading" || state === "idle") && (
+        <AgentProcessState
+          agentSteps={STEPS}
+          currentStep={step}
+          state="loading"
+        />
       )}
 
-      {aiLoading && (
-        <div className="mt-5 flex flex-col items-center gap-2.5">
-          <div className="flex gap-2">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="w-1.5 h-1.5 rounded-full bg-brand animate-status-pulse"
-                style={{ animationDelay: `${i * 0.3}s` }}
-              />
-            ))}
-          </div>
-          <p className="text-xs text-txt-muted">
-            AI is analyzing portfolio&hellip;
-          </p>
-        </div>
+      {state === "error" && (
+        <AgentProcessState
+          agentSteps={STEPS}
+          currentStep={step}
+          state="error"
+          onRetry={() => setRunId((n) => n + 1)}
+        />
       )}
 
-      {aiText && (
+      {(state === "streaming" || state === "success") && (
         <div>
-          <div className="text-[10px] text-txt-dim mb-1.5 mt-1">
-            Sample analysis (live AI unavailable)
-          </div>
-          <p className="text-xs text-txt leading-relaxed mb-3">{aiText}</p>
-          <button
-            onClick={() => {
-              setAiText(null);
-              setAiLoading(false);
-            }}
-            className="bg-transparent border border-border rounded-md px-3 py-1 text-txt-muted text-[11px] cursor-pointer font-sans hover:border-border-hi transition-colors"
-          >
-            Regenerate
-          </button>
+          <p className="text-xs text-txt leading-relaxed">
+            {streamed}
+            {state === "streaming" && (
+              <span
+                className="inline-block w-[5px] h-[11px] ml-0.5 bg-brand align-middle animate-caret-blink"
+                aria-hidden
+              />
+            )}
+          </p>
+          {state === "success" && (
+            <p className="text-[10px] text-txt-dim mt-3 flex items-center gap-1.5">
+              <span
+                className="inline-block w-1 h-1 rounded-full bg-ok"
+                aria-hidden
+              />
+              Analysis complete · Updated just now
+            </p>
+          )}
         </div>
       )}
-    </>
+    </div>
+  );
+}
+
+function RefreshIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M21 12a9 9 0 0 1-15.36 6.36L3 16" />
+      <path d="M3 12a9 9 0 0 1 15.36-6.36L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M3 21v-5h5" />
+    </svg>
   );
 }

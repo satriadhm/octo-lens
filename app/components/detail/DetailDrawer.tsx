@@ -5,7 +5,6 @@ import type { App, BudgetResult } from "@/app/lib/types";
 import { Pill } from "@/app/components/shared/Card";
 import { OverviewTab } from "./OverviewTab";
 import { BudgetTab } from "./BudgetTab";
-import { UXTab } from "./UXTab";
 import { FeaturesTab } from "./FeaturesTab";
 
 interface DetailDrawerProps {
@@ -14,7 +13,7 @@ interface DetailDrawerProps {
   onClose: () => void;
 }
 
-const TABS = ["overview", "budget", "ux", "features"] as const;
+const TABS = ["overview", "budget", "features"] as const;
 type TabId = (typeof TABS)[number];
 
 export function DetailDrawer({ app, budget, onClose }: DetailDrawerProps) {
@@ -99,7 +98,6 @@ export function DetailDrawer({ app, budget, onClose }: DetailDrawerProps) {
       <div className="flex-1 overflow-y-auto p-5 bg-background">
         {tab === "overview" && <OverviewTab app={app} />}
         {tab === "budget" && <BudgetTab budget={budget} />}
-        {tab === "ux" && <UXTab app={app} />}
         {tab === "features" && <FeaturesTab app={app} />}
       </div>
     </div>

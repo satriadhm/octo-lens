@@ -62,6 +62,31 @@ export interface AppApi {
   endpoints: ApiEndpoint[];
 }
 
+export interface AppInfra {
+  vmSpec: string;
+  monthlyCost: number;
+  teamSize?: number;
+}
+
+export type FeatureClassification =
+  | "HIGH VALUE"
+  | "AT RISK"
+  | "ZOMBIE CANDIDATE"
+  | "HIDDEN GEM";
+
+export type FeatureTrend = "up" | "flat" | "down" | "dead";
+
+export interface FeatureInvestment {
+  path: string;
+  module: string;
+  investedIDR: number;
+  classification: FeatureClassification;
+  trend: FeatureTrend;
+  recommendation: string;
+  /** 30-day usage sparkline (normalized 0-100). */
+  spark?: number[];
+}
+
 export interface App {
   id: string;
   name: string;
@@ -74,6 +99,8 @@ export interface App {
   budget: AppBudget;
   ux: AppUX;
   api: AppApi;
+  infra?: AppInfra;
+  featureInvestments?: FeatureInvestment[];
 }
 
 export interface BudgetFuture {

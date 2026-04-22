@@ -26,6 +26,10 @@ import { SourceTag } from "@/app/components/shared/SourceTag";
 import { UsageHeatmap } from "@/app/components/ops/UsageHeatmap";
 import { rtColor, uxColor, errorRateColor } from "@/app/lib/utils";
 import { SectionHeader } from "@/app/components/shared/SectionHeader";
+import {
+  AITechnicalSummary,
+  type FocusArea,
+} from "@/app/components/ops/AITechnicalSummary";
 
 interface OpsViewProps {
   enriched: EnrichedApp[];
@@ -282,6 +286,26 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
     { key: "", label: "", sortable: false },
   ];
 
+  function handleFocusArea(area: FocusArea) {
+    const targetId =
+      area === "latency"
+        ? "ops-latency"
+        : area === "errors"
+          ? "ops-kpis"
+          : "ops-app-status";
+    const el = document.getElementById(targetId);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.classList.add("ring-2", "ring-brand/40", "rounded-xl");
+    window.setTimeout(() => {
+      el.classList.remove("ring-2", "ring-brand/40", "rounded-xl");
+    }, 1600);
+    if (area === "zombie") {
+      setSortKey("totalReq");
+      setSortDir("asc");
+    }
+  }
+
   return (
     <div className="px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7 flex flex-col gap-7 overflow-y-auto h-full max-w-[1600px] mx-auto w-full">
       {/* Narrative */}
@@ -299,6 +323,9 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
           onExportPDF={() => exportOpsPDF(enriched)}
         />
       </div>
+
+      {/* AI Technical Summary */}
+      <AITechnicalSummary enriched={enriched} onFocusArea={handleFocusArea} />
 
       {/* Ops KPI */}
       <div id="ops-kpis" className="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-3 sm:gap-4 animate-fade-in-up stagger-1">

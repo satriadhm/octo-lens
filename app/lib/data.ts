@@ -19,6 +19,22 @@ function buildDailyActivity(seed: number) {
   });
 }
 
+function buildSpark(trend: "up" | "flat" | "down" | "dead", seed: number) {
+  return Array.from({ length: 30 }, (_, i) => {
+    const base = seed;
+    const drift =
+      trend === "up"
+        ? (i / 30) * 40
+        : trend === "down"
+          ? -(i / 30) * 35
+          : trend === "dead"
+            ? -Math.min(45, (i / 30) * 50)
+            : 0;
+    const noise = Math.sin(i * 0.7 + seed) * 6;
+    return Math.max(0, Math.round(base + drift + noise));
+  });
+}
+
 export const APPS: App[] = [
   {
     id: "APP-001",
@@ -97,6 +113,39 @@ export const APPS: App[] = [
         },
       ],
     },
+    infra: { vmSpec: "n2-standard-16 x 12", monthlyCost: 150000000, teamSize: 28 },
+    featureInvestments: [
+      {
+        path: "/transfer/interbank",
+        module: "Payments",
+        investedIDR: 1_600_000_000,
+        classification: "HIGH VALUE",
+        trend: "up",
+        recommendation:
+          "Pertahankan kapasitas dan tingkatkan monitoring saat jam sibuk untuk menjaga pengalaman transfer.",
+        spark: buildSpark("up", 60),
+      },
+      {
+        path: "/loan/kpr/apply",
+        module: "Lending",
+        investedIDR: 820_000_000,
+        classification: "ZOMBIE CANDIDATE",
+        trend: "dead",
+        recommendation:
+          "Arahkan pengguna ke jalur KPR Digital atau pertimbangkan penghentian fitur ini di rilis berikutnya.",
+        spark: buildSpark("dead", 12),
+      },
+      {
+        path: "/investment/reksa",
+        module: "Wealth",
+        investedIDR: 540_000_000,
+        classification: "HIDDEN GEM",
+        trend: "up",
+        recommendation:
+          "Adopsi rendah namun error rate sangat baik — naikkan promosi fitur Reksa Dana di homepage.",
+        spark: buildSpark("up", 18),
+      },
+    ],
   },
   {
     id: "APP-002",
@@ -177,6 +226,39 @@ export const APPS: App[] = [
         },
       ],
     },
+    infra: { vmSpec: "n2-standard-8 x 6", monthlyCost: 90000000, teamSize: 16 },
+    featureInvestments: [
+      {
+        path: "/transfer/domestic",
+        module: "Payments",
+        investedIDR: 780_000_000,
+        classification: "AT RISK",
+        trend: "flat",
+        recommendation:
+          "P95 mendekati 600ms dan error rate meningkat — review kapasitas database dan koneksi core banking.",
+        spark: buildSpark("flat", 55),
+      },
+      {
+        path: "/report/statement",
+        module: "Reporting",
+        investedIDR: 420_000_000,
+        classification: "HIGH VALUE",
+        trend: "up",
+        recommendation:
+          "Fitur Laporan tumbuh stabil — pertahankan performa dan tambahkan opsi ekspor yang lebih modern.",
+        spark: buildSpark("up", 40),
+      },
+      {
+        path: "/export/csv",
+        module: "Reporting",
+        investedIDR: 310_000_000,
+        classification: "ZOMBIE CANDIDATE",
+        trend: "dead",
+        recommendation:
+          "Adopsi di bawah 1% dan turun terus — gabungkan ke fitur Laporan atau retire sebelum kuartal berikutnya.",
+        spark: buildSpark("dead", 8),
+      },
+    ],
   },
   {
     id: "APP-003",
@@ -254,6 +336,39 @@ export const APPS: App[] = [
         },
       ],
     },
+    infra: { vmSpec: "n2-standard-8 x 10", monthlyCost: 120000000, teamSize: 22 },
+    featureInvestments: [
+      {
+        path: "/kpr/simulate",
+        module: "Simulation",
+        investedIDR: 1_100_000_000,
+        classification: "AT RISK",
+        trend: "flat",
+        recommendation:
+          "Trafik tinggi namun P95 di atas 2 detik dan error rate 3.6% — prioritaskan tuning query dan caching.",
+        spark: buildSpark("flat", 62),
+      },
+      {
+        path: "/kpr/apply",
+        module: "Origination",
+        investedIDR: 1_480_000_000,
+        classification: "ZOMBIE CANDIDATE",
+        trend: "down",
+        recommendation:
+          "Hanya 10% adopsi dengan error 4%+ — perbaiki alur pengajuan atau pertimbangkan migrasi ke Mobile Banking.",
+        spark: buildSpark("down", 22),
+      },
+      {
+        path: "/kpr/document/upload",
+        module: "Origination",
+        investedIDR: 620_000_000,
+        classification: "ZOMBIE CANDIDATE",
+        trend: "dead",
+        recommendation:
+          "Hampir tidak dipakai dan performa lambat — review apakah fitur upload dapat digabung ke E-Sign.",
+        spark: buildSpark("dead", 6),
+      },
+    ],
   },
   {
     id: "APP-004",
@@ -324,6 +439,29 @@ export const APPS: App[] = [
         },
       ],
     },
+    infra: { vmSpec: "n2-standard-4 x 4", monthlyCost: 45000000, teamSize: 9 },
+    featureInvestments: [
+      {
+        path: "/approval/pending",
+        module: "Approval",
+        investedIDR: 320_000_000,
+        classification: "HIGH VALUE",
+        trend: "flat",
+        recommendation:
+          "Core workflow operasional — jaga SLA dan tambahkan notifikasi untuk approval yang tertahan.",
+        spark: buildSpark("flat", 48),
+      },
+      {
+        path: "/recon/daily",
+        module: "Reconciliation",
+        investedIDR: 280_000_000,
+        classification: "AT RISK",
+        trend: "flat",
+        recommendation:
+          "P95 menembus 500ms di akhir bulan — jadwalkan batch rekonsiliasi di luar jam sibuk.",
+        spark: buildSpark("flat", 36),
+      },
+    ],
   },
   {
     id: "APP-005",
@@ -391,6 +529,29 @@ export const APPS: App[] = [
         },
       ],
     },
+    infra: { vmSpec: "n2-highmem-32 x 8", monthlyCost: 280000000, teamSize: 14 },
+    featureInvestments: [
+      {
+        path: "/fx/trade",
+        module: "Trading",
+        investedIDR: 2_400_000_000,
+        classification: "HIGH VALUE",
+        trend: "up",
+        recommendation:
+          "Backbone revenue — pastikan kapasitas auto-scale dan simulasikan beban puncak bulanan.",
+        spark: buildSpark("up", 70),
+      },
+      {
+        path: "/bond/settlement",
+        module: "Settlement",
+        investedIDR: 1_250_000_000,
+        classification: "HIGH VALUE",
+        trend: "flat",
+        recommendation:
+          "Volume stabil dengan error rate rendah — pertahankan SLA dan dokumentasikan disaster recovery.",
+        spark: buildSpark("flat", 55),
+      },
+    ],
   },
 ];
 
