@@ -51,7 +51,8 @@ export function CostEfficiencyQuadrant({
   }));
 
   return (
-    <div className="relative">
+    <div>
+      <div className="relative h-[340px] w-full">
       <ResponsiveContainer width="100%" height={340}>
         <ScatterChart margin={{ top: 16, right: 24, bottom: 36, left: 52 }}>
           <defs>
@@ -193,51 +194,25 @@ export function CostEfficiencyQuadrant({
         </ScatterChart>
       </ResponsiveContainer>
 
-      {/* Quadrant watermark labels */}
+      {/* Quadrant watermark labels — scoped to chart bounds only */}
       <div
-        className="pointer-events-none absolute inset-0 p-3 pl-14 pr-8 pb-10 pt-6 grid grid-cols-2 grid-rows-2"
+        className="pointer-events-none absolute inset-0 pl-[52px] pr-6 pb-9 pt-4 grid grid-cols-2 grid-rows-2 gap-1"
         aria-hidden
       >
-        <div className="flex items-start justify-start">
+        <div className="flex items-start justify-start min-h-0">
           <QuadrantLabel tone="danger">OVERSPENDING</QuadrantLabel>
         </div>
-        <div className="flex items-start justify-end">
+        <div className="flex items-start justify-end min-h-0">
           <QuadrantLabel tone="ok">EFFICIENT</QuadrantLabel>
         </div>
-        <div className="flex items-end justify-start">
+        <div className="flex items-end justify-start min-h-0">
           <QuadrantLabel tone="muted">IDLE</QuadrantLabel>
         </div>
-        <div className="flex items-end justify-end">
+        <div className="flex items-end justify-end min-h-0">
           <QuadrantLabel tone="warn">UNDERPROVISIONED</QuadrantLabel>
         </div>
       </div>
-
-      <details className="mt-3 border-t border-border pt-2 group">
-        <summary className="cursor-pointer list-none text-[11px] text-txt-dim hover:text-txt py-2 select-none [&::-webkit-details-marker]:hidden flex items-center gap-1.5 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-txt-dim/50 group-open:before:bg-brand">
-          <span className="font-medium">Select application</span>
-          <span className="text-txt-dim/80 font-normal">(list)</span>
-        </summary>
-        <div className="flex flex-wrap gap-2 pb-1 pt-1">
-          {data.map((d) => {
-            const isSelected = d.app.id === selectedId;
-            return (
-              <button
-                key={d.app.id}
-                type="button"
-                onClick={() => onSelect(d.app)}
-                aria-pressed={isSelected}
-                className={`h-11 px-3 rounded-md border text-[11px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-brand/40 ${
-                  isSelected
-                    ? "border-brand text-brand bg-brand-light"
-                    : "border-border text-txt-muted hover:text-txt hover:border-border-hi"
-                }`}
-              >
-                {d.app.shortName}
-              </button>
-            );
-          })}
-        </div>
-      </details>
+      </div>
     </div>
   );
 }

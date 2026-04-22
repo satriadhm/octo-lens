@@ -242,7 +242,7 @@ function ActionRow({
         onClick={onToggle}
         aria-pressed={checked}
         aria-label={checked ? "Mark as unacknowledged" : "Acknowledge action"}
-        className={`mt-0.5 shrink-0 w-11 h-11 rounded border transition-colors flex items-center justify-center ${
+        className={`mt-0.5 shrink-0 inline-flex size-[18px] rounded-[4px] border transition-colors items-center justify-center focus-visible:outline-2 focus-visible:outline-brand/40 focus-visible:outline-offset-2 ${
           checked
             ? "bg-brand border-brand text-white"
             : "bg-surface border-border hover:border-brand/40"
@@ -259,6 +259,7 @@ function ActionRow({
             strokeLinecap="round"
             strokeLinejoin="round"
             aria-hidden
+            className="shrink-0"
           >
             <polyline points="20 6 9 17 4 12" />
           </svg>
