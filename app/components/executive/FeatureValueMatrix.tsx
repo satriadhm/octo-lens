@@ -9,6 +9,11 @@ import type {
   FeatureTrend,
 } from "@/app/lib/types";
 import { idr } from "@/app/lib/calculators";
+import {
+  deriveProductImpactLine,
+  deriveProductRecommendation,
+  formatProductImpactLine,
+} from "@/app/lib/deriveProductRecommendation";
 import { LENS_AGENT_NAME } from "@/app/lib/lensaiCopy";
 
 interface FeatureValueMatrixProps {
@@ -25,6 +30,14 @@ interface Row {
 
 function featureRowKey(r: Row) {
   return `${r.app.id}-${r.investment.path}`;
+}
+
+function matrixLensAdvice(row: Row) {
+  const body = deriveProductRecommendation(row.investment, row.endpoint);
+  const impact = formatProductImpactLine(
+    deriveProductImpactLine(row.investment, row.endpoint),
+  );
+  return { body, impact };
 }
 
 type SortKey = "name" | "module" | "usage" | "trend" | "classification" | "investment";
@@ -228,6 +241,7 @@ export function FeatureValueMatrix({
             sidebarRow !== null && featureRowKey(sidebarRow) === rKey;
           const isZombie =
             row.investment.classification === "DEPRECATION CANDIDATE";
+          const { body: recBody, impact: recImpact } = matrixLensAdvice(row);
           return (
             <div
               key={rKey}
@@ -258,8 +272,11 @@ export function FeatureValueMatrix({
                 <p className="text-[10px] font-display font-semibold uppercase tracking-[0.12em] text-brand">
                   {LENS_AGENT_NAME} recommendation
                 </p>
-                <p className="mt-1 text-[11px] text-txt-muted line-clamp-2">
-                  {row.investment.recommendation}
+                <p className="mt-1 text-[10px] font-semibold text-txt-dim leading-snug">
+                  {recImpact}
+                </p>
+                <p className="mt-1 text-[11px] text-txt-muted line-clamp-3">
+                  {recBody}
                 </p>
               </div>
               <button
@@ -477,6 +494,7 @@ function FeatureRow({
   onToggle: () => void;
   hideAppName: boolean;
 }) {
+  const { body: recBody, impact: recImpact } = matrixLensAdvice(row);
   const isZombie = row.investment.classification === "DEPRECATION CANDIDATE";
   const rowTone = isZombie
     ? isOpen
@@ -523,12 +541,15 @@ function FeatureRow({
         {idr(row.investment.investedIDR)}
       </td>
       <td className="px-4 py-3 text-txt-muted text-[11px] max-w-[320px]">
-        <span className="line-clamp-2">
+        <p className="text-[10px] font-semibold text-txt-dim leading-snug">
+          {recImpact}
+        </p>
+        <p className="mt-1 line-clamp-2">
           <span className="text-[10px] font-semibold text-brand uppercase tracking-wider mr-1">
             {LENS_AGENT_NAME}
           </span>
-          {row.investment.recommendation}
-        </span>
+          {recBody}
+        </p>
         <button
           type="button"
           onClick={onToggle}
@@ -708,15 +729,17 @@ function RecommendationSidebar({
 }
 
 function SidebarBody({ row }: { row: Row }) {
+  const { body, impact } = matrixLensAdvice(row);
   return (
     <div className="flex flex-col gap-6">
       <section>
         <p className="text-[11px] font-display font-semibold uppercase tracking-[0.12em] text-txt-dim mb-2">
           {LENS_AGENT_NAME} recommendation
         </p>
-        <p className="text-xs text-txt leading-relaxed">
-          {row.investment.recommendation}
+        <p className="text-[11px] font-semibold text-txt-dim mb-2 leading-snug">
+          Perkiraan dampak — {impact}
         </p>
+        <p className="text-xs text-txt leading-relaxed">{body}</p>
       </section>
 
       <section>
