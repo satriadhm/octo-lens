@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   App,
   ApiEndpoint,
@@ -65,7 +65,16 @@ export function FeatureValueMatrix({
   const [sortKey, setSortKey] = useState<SortKey>("classification");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [sidebarRow, setSidebarRow] = useState<Row | null>(null);
   const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setExpanded(null);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, []);
 
   const sorted = useMemo(() => {
     const dir = sortDir === "asc" ? 1 : -1;
@@ -135,6 +144,7 @@ export function FeatureValueMatrix({
     sortKey === key ? (sortDir === "asc" ? " \u2191" : " \u2193") : "";
 
   return (
+    <>
     <section className="bg-surface border border-border rounded-xl overflow-hidden">
       <header className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-border">
         <div>
@@ -153,29 +163,39 @@ export function FeatureValueMatrix({
       </header>
 
       {/* Summary row */}
-      <div className="px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border bg-surface-dim/60">
-        <p className="text-xs sm:text-sm text-txt leading-snug max-w-[65ch]">
+      <div
+        className={`px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b ${
+          zombies.length > 0
+            ? "border-danger/20 bg-danger/5"
+            : "border-border bg-surface-dim/60"
+        }`}
+      >
+        <p className="text-xs sm:text-sm text-txt leading-snug max-w-[65ch] flex items-start gap-2">
           {zombies.length > 0 ? (
             <>
-              <span className="font-semibold text-txt">
-                {zombies.length} zombie candidate{zombies.length > 1 ? "s" : ""}{" "}
-                found
-              </span>
-              <span className="text-txt-muted">
-                {" "}
-                · estimasi {idr(zombieIDR)} terinvestasi di fitur yang
-                underutilized
+              <span
+                aria-hidden
+                className="mt-[3px] inline-block size-2 rounded-full bg-danger shrink-0"
+              />
+              <span>
+                <span className="font-semibold text-txt">
+                  {zombies.length} fitur zombie terdeteksi
+                </span>
+                <span className="text-txt-muted">
+                  {" "}
+                  · {idr(zombieIDR)} investasi pada fitur yang jarang dipakai
+                </span>
               </span>
             </>
           ) : (
             <span className="text-txt-muted">
-              Tidak ada fitur zombie pada saat ini
+              Tidak ada fitur zombie — portofolio sehat
             </span>
           )}
         </p>
         {zombies.length > 0 && (
-          <span className="text-[11px] font-medium text-txt-muted shrink-0">
-            Review quarterly
+          <span className="text-[11px] font-semibold text-danger shrink-0 uppercase tracking-[0.08em]">
+            Pertimbangkan sunset
           </span>
         )}
       </div>
@@ -184,10 +204,16 @@ export function FeatureValueMatrix({
         {pageRows.map((row) => {
           const rowKey = `${row.app.id}-${row.investment.path}`;
           const isOpen = expanded === rowKey;
+          const isZombie =
+            row.investment.classification === "ZOMBIE CANDIDATE";
           return (
             <div
               key={rowKey}
-              className="rounded-xl border border-border bg-surface px-3.5 py-3"
+              className={`rounded-xl border px-3.5 py-3 ${
+                isZombie
+                  ? "border-danger/30 bg-danger/5"
+                  : "border-border bg-surface"
+              }`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
@@ -206,19 +232,25 @@ export function FeatureValueMatrix({
                 <MiniStat label="Usage (30d)" value={row.usage30d.toLocaleString()} />
                 <MiniStat label="Investment" value={idr(row.investment.investedIDR)} />
               </div>
+              <div className="mt-3">
+                <p className="text-[10px] font-display font-semibold uppercase tracking-[0.12em] text-brand">
+                  AI Recommendation
+                </p>
+                <p className="mt-1 text-[11px] text-txt-muted line-clamp-2">
+                  {row.investment.recommendation}
+                </p>
+              </div>
               <button
                 type="button"
-                onClick={() => setExpanded(isOpen ? null : rowKey)}
+                onClick={() => {
+                  setExpanded(isOpen ? null : rowKey);
+                  setSidebarRow(row);
+                }}
                 aria-expanded={isOpen}
                 className="mt-2.5 h-11 px-3 rounded-md border border-border text-[12px] font-semibold text-txt hover:bg-surface-dim focus-visible:outline-2 focus-visible:outline-brand/40"
               >
-                {isOpen ? "Hide details" : "Show details"}
+                Show details →
               </button>
-              {isOpen && (
-                <div className="mt-3 pt-3 border-t border-border">
-                  <ExpandedPanel row={row} />
-                </div>
-              )}
             </div>
           );
         })}
@@ -271,7 +303,7 @@ export function FeatureValueMatrix({
                 Est. Investment
               </Th>
               <th className="px-4 py-2.5 text-left text-txt-dim font-semibold font-display text-[11px] tracking-[0.04em]">
-                Recommendation
+                AI Recommendation
               </th>
             </tr>
           </thead>
@@ -284,7 +316,10 @@ export function FeatureValueMatrix({
                   key={rowKey}
                   row={row}
                   isOpen={isOpen}
-                  onToggle={() => setExpanded(isOpen ? null : rowKey)}
+                  onToggle={() => {
+                    setExpanded(isOpen ? null : rowKey);
+                    setSidebarRow(row);
+                  }}
                   hideAppName={!!selectedApp}
                 />
               );
@@ -337,6 +372,12 @@ export function FeatureValueMatrix({
         </footer>
       )}
     </section>
+    <RecommendationSidebar
+      row={sidebarRow}
+      isOpen={expanded !== null}
+      onClose={() => setExpanded(null)}
+    />
+    </>
   );
 }
 
@@ -385,58 +426,68 @@ function FeatureRow({
   onToggle: () => void;
   hideAppName: boolean;
 }) {
+  const isZombie = row.investment.classification === "ZOMBIE CANDIDATE";
+  const rowTone = isZombie
+    ? isOpen
+      ? "bg-danger/15"
+      : "bg-danger/[0.06] hover:bg-danger/10"
+    : isOpen
+      ? "bg-brand-light/40"
+      : "hover:bg-brand-light/20";
   return (
-    <>
-      <tr
-        className={`border-b border-border transition-colors ${
-          isOpen ? "bg-brand-light/40" : "hover:bg-brand-light/20"
+    <tr
+      className={`border-b transition-colors ${rowTone} ${
+        isZombie ? "border-danger/20" : "border-border"
+      }`}
+    >
+      <td
+        className={`px-4 py-3 whitespace-nowrap relative ${
+          isZombie
+            ? "before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[3px] before:bg-danger"
+            : ""
         }`}
       >
-        <td className="px-4 py-3 whitespace-nowrap">
-          <div className="flex flex-col gap-0.5">
-            <code className="text-[11px] text-txt font-mono">
-              {row.endpoint.path}
-            </code>
-            {!hideAppName && (
-              <span className="text-[10px] text-txt-dim">{row.app.name}</span>
-            )}
-          </div>
-        </td>
-        <td className="px-4 py-3 text-txt-muted whitespace-nowrap">
-          {row.investment.module}
-        </td>
-        <td className="px-4 py-3">
-          <UsageCell spark={row.investment.spark} calls={row.usage30d} />
-        </td>
-        <td className="px-4 py-3 whitespace-nowrap">
-          <TrendCell trend={row.investment.trend} />
-        </td>
-        <td className="px-4 py-3 whitespace-nowrap">
-          <ClassBadge classification={row.investment.classification} />
-        </td>
-        <td className="px-4 py-3 text-txt font-mono tabular-nums whitespace-nowrap">
-          {idr(row.investment.investedIDR)}
-        </td>
-        <td className="px-4 py-3 text-txt-muted text-[11px] max-w-[320px]">
-          <span className="line-clamp-2">{row.investment.recommendation}</span>
-          <button
-            type="button"
-            onClick={onToggle}
-            aria-expanded={isOpen}
-            className="mt-2 h-11 px-3 rounded-md border border-border text-[11px] font-semibold text-txt hover:bg-surface focus-visible:outline-2 focus-visible:outline-brand/40"
-          >
-            {isOpen ? "Hide details" : "Details"}
-          </button>
-        </td>
-      </tr>
-      {isOpen && (
-        <tr className="border-b border-border bg-surface-dim/40">
-          <td colSpan={7} className="px-4 py-4">
-            <ExpandedPanel row={row} />
-          </td>
-        </tr>
-      )}
-    </>
+        <div className="flex flex-col gap-0.5">
+          <code className="text-[11px] text-txt font-mono">
+            {row.endpoint.path}
+          </code>
+          {!hideAppName && (
+            <span className="text-[10px] text-txt-dim">{row.app.name}</span>
+          )}
+        </div>
+      </td>
+      <td className="px-4 py-3 text-txt-muted whitespace-nowrap">
+        {row.investment.module}
+      </td>
+      <td className="px-4 py-3">
+        <UsageCell spark={row.investment.spark} calls={row.usage30d} />
+      </td>
+      <td className="px-4 py-3 whitespace-nowrap">
+        <TrendCell trend={row.investment.trend} />
+      </td>
+      <td className="px-4 py-3 whitespace-nowrap">
+        <ClassBadge classification={row.investment.classification} />
+      </td>
+      <td className="px-4 py-3 text-txt font-mono tabular-nums whitespace-nowrap">
+        {idr(row.investment.investedIDR)}
+      </td>
+      <td className="px-4 py-3 text-txt-muted text-[11px] max-w-[320px]">
+        <span className="line-clamp-2">
+          <span className="text-[10px] font-semibold text-brand uppercase tracking-wider mr-1">
+            AI
+          </span>
+          {row.investment.recommendation}
+        </span>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={isOpen}
+          className="mt-2 h-11 px-3 rounded-md border border-border text-[11px] font-semibold text-txt hover:bg-surface focus-visible:outline-2 focus-visible:outline-brand/40"
+        >
+          Details →
+        </button>
+      </td>
+    </tr>
   );
 }
 
@@ -552,6 +603,74 @@ function ExpandedPanel({ row }: { row: Row }) {
         />
       </div>
     </div>
+  );
+}
+
+function RecommendationSidebar({
+  row,
+  isOpen,
+  onClose,
+}: {
+  row: Row | null;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const closeRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      const id = window.setTimeout(() => {
+        closeRef.current?.focus();
+      }, 50);
+      return () => window.clearTimeout(id);
+    }
+  }, [isOpen]);
+
+  return (
+    <>
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 z-40 transition-opacity duration-300"
+          onClick={onClose}
+          aria-hidden
+        />
+      )}
+      <aside
+        aria-label="AI Feature Recommendation Details"
+        aria-hidden={!isOpen}
+        className={`fixed top-0 right-0 h-full w-full sm:w-[480px] bg-surface border-l border-border z-50 flex flex-col shadow-xl transition-transform duration-300 ease-out ${
+          isOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <header className="flex items-start justify-between gap-3 px-5 py-4 border-b border-border">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] uppercase tracking-wider text-brand font-semibold">
+              AI Feature Details
+            </p>
+            <code className="mt-1 block text-[12px] text-txt font-mono break-all">
+              {row?.endpoint.path}
+            </code>
+            {row && (
+              <div className="mt-2">
+                <ClassBadge classification={row.investment.classification} />
+              </div>
+            )}
+          </div>
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="h-9 w-9 rounded-md hover:bg-surface-dim text-txt-muted hover:text-txt flex items-center justify-center text-lg shrink-0 focus-visible:outline-2 focus-visible:outline-brand/40"
+          >
+            ×
+          </button>
+        </header>
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          {row && <ExpandedPanel row={row} />}
+        </div>
+      </aside>
+    </>
   );
 }
 

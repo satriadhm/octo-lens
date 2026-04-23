@@ -143,15 +143,10 @@ export function ExecutiveView({
         <AISuggestPanel app={quadrantApp} />
       </section>
 
-      {/* SECTION 3 — Feature Value Matrix */}
-      <div id="exec-features" className="animate-fade-in-up stagger-3">
-        <FeatureValueMatrix apps={apps} selectedApp={quadrantApp} />
-      </div>
-
-      {/* Existing budget + AI summary + risks kept beneath the new experience */}
+      {/* SECTION 3 — Portfolio Budget + Budget Health */}
       <div
         id="exec-budget"
-        className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 animate-fade-in-up stagger-4"
+        className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 animate-fade-in-up stagger-3"
       >
         <Card variant="bordered" className="!p-5">
           <Label>Portfolio Budget Health</Label>
@@ -183,9 +178,10 @@ export function ExecutiveView({
         </Card>
       </div>
 
+      {/* SECTION 4 — Top Risks + AI Summary */}
       <div
         id="exec-risks"
-        className="grid grid-cols-1 lg:grid-cols-2 gap-5 animate-fade-in-up stagger-5"
+        className="grid grid-cols-1 lg:grid-cols-2 gap-5 animate-fade-in-up stagger-4"
       >
         <Card variant="bordered">
           <Label color="var(--color-red)">Top Risks This Month</Label>
@@ -243,6 +239,11 @@ export function ExecutiveView({
         <Card variant="bordered">
           <AISummary enriched={enriched} />
         </Card>
+      </div>
+
+      {/* SECTION 5 — Feature Value Matrix (moved to bottom) */}
+      <div id="exec-features" className="animate-fade-in-up stagger-5">
+        <FeatureValueMatrix apps={apps} selectedApp={quadrantApp} />
       </div>
     </div>
   );
