@@ -7,8 +7,6 @@ import { OctoLensLogo } from "./OctoLensLogo";
 interface SidebarProps {
   mode: ViewMode;
   onModeChange: (mode: ViewMode) => void;
-  /** Fires before section scroll; use to switch in-view tabs (e.g. Executive). */
-  onSubItemClick?: (sectionId: string) => void;
 }
 
 interface SubItem {
@@ -30,11 +28,19 @@ const NAV_ITEMS: NavItem[] = [
     icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>`,
     subItems: [
       { id: "exec-overview", label: "Portfolio Overview" },
-      { id: "exec-system-efficiency", label: "System Efficiency" },
       { id: "exec-kpis", label: "KPI Summary" },
       { id: "exec-budget", label: "Budget Health" },
       { id: "exec-risks", label: "Top Risks" },
-      { id: "exec-features", label: "Features & adoption" },
+    ],
+  },
+  {
+    id: "system",
+    label: "System Efficiency",
+    icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2.5M8 12.5V15M15 8h-2.5M3.5 8H1M13.2 2.8l-1.8 1.8M4.6 11.4l-1.8 1.8M13.2 13.2l-1.8-1.8M4.6 4.6L2.8 2.8"/></svg>`,
+    subItems: [
+      { id: "sys-overview", label: "Overview" },
+      { id: "sys-quadrant", label: "Cost efficiency quadrant" },
+      { id: "sys-features", label: "Feature value matrix" },
     ],
   },
   {
@@ -75,11 +81,7 @@ function scrollToSection(sectionId: string) {
   }
 }
 
-export function Sidebar({
-  mode,
-  onModeChange,
-  onSubItemClick,
-}: SidebarProps) {
+export function Sidebar({ mode, onModeChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [activeSubItem, setActiveSubItem] = useState<string | null>(null);
 
@@ -93,19 +95,10 @@ export function Sidebar({
     [mode, onModeChange],
   );
 
-  const handleSubItem = useCallback(
-    (subId: string) => {
-      setActiveSubItem(subId);
-      onSubItemClick?.(subId);
-      const doScroll = () => scrollToSection(subId);
-      if (onSubItemClick) {
-        window.setTimeout(doScroll, 120);
-      } else {
-        doScroll();
-      }
-    },
-    [onSubItemClick],
-  );
+  const handleSubItem = useCallback((subId: string) => {
+    setActiveSubItem(subId);
+    scrollToSection(subId);
+  }, []);
 
   const activeNav = NAV_ITEMS.find((n) => n.id === mode)!;
 

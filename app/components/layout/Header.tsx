@@ -15,6 +15,10 @@ const VIEW_TITLES: Record<ViewMode, { title: string; subtitle: string }> = {
     title: "Operations Dashboard",
     subtitle: "Performance · Latency · API telemetry",
   },
+  system: {
+    title: "System Efficiency",
+    subtitle: "Cost–usage fit · LensAI+ app briefings",
+  },
 };
 
 export function Header({ mode }: HeaderProps) {

@@ -121,9 +121,7 @@ export interface EnrichedApp {
   budget: BudgetResult;
 }
 
-export type ViewMode = "executive" | "ops";
-
-export type ExecutiveSubTab = "overview" | "system-efficiency";
+export type ViewMode = "executive" | "ops" | "system";
 
 export interface SlowQuery {
   action: "http" | "file-transfer" | "db";

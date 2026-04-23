@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { App, ExecutiveSubTab, ViewMode } from "@/app/lib/types";
+import type { App, ViewMode } from "@/app/lib/types";
 import { APPS } from "@/app/lib/data";
 import { calcBudget } from "@/app/lib/calculators";
 import { Header } from "@/app/components/layout/Header";
 import { Sidebar } from "@/app/components/layout/Sidebar";
 import { ExecutiveView } from "@/app/components/executive/ExecutiveView";
+import { SystemEfficiencyView } from "@/app/components/system-efficiency/SystemEfficiencyView";
 import { OpsView } from "@/app/components/ops/OpsView";
 import { DetailDrawer } from "@/app/components/detail/DetailDrawer";
 
@@ -17,9 +18,6 @@ const enriched = APPS.map((app) => ({
 
 export function Dashboard() {
   const [mode, setMode] = useState<ViewMode>("executive");
-  const [executiveSubTab, setExecutiveSubTab] = useState<ExecutiveSubTab>(
-    "overview",
-  );
   const [selected, setSelected] = useState<App | null>(null);
   const [transitioning, setTransitioning] = useState(false);
 
@@ -53,18 +51,7 @@ export function Dashboard() {
       {/* Outer shell: sidebar + main column */}
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
-        <Sidebar
-          mode={mode}
-          onModeChange={toggleMode}
-          onSubItemClick={(sectionId) => {
-            if (!sectionId.startsWith("exec-")) return;
-            if (sectionId === "exec-system-efficiency") {
-              setExecutiveSubTab("system-efficiency");
-            } else {
-              setExecutiveSubTab("overview");
-            }
-          }}
-        />
+        <Sidebar mode={mode} onModeChange={toggleMode} />
 
         {/* Main column: header + scrollable content */}
         <div className="flex-1 flex flex-col min-w-0">
@@ -80,9 +67,9 @@ export function Dashboard() {
                   enriched={enriched}
                   onSelect={setSelected}
                   selected={selected}
-                  subTab={executiveSubTab}
-                  onSubTabChange={setExecutiveSubTab}
                 />
+              ) : mode === "system" ? (
+                <SystemEfficiencyView enriched={enriched} />
               ) : (
                 <OpsView enriched={enriched} onSelect={setSelected} />
               )}

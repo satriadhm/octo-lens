@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import type { App, EnrichedApp, ExecutiveSubTab } from "@/app/lib/types";
+import type { App, EnrichedApp } from "@/app/lib/types";
 import { Card, Label, Pill } from "@/app/components/shared/Card";
 import { ExportMenu } from "@/app/components/shared/ExportMenu";
 import { exportExecutiveCSV, exportExecutivePDF } from "@/app/lib/csv";
@@ -9,29 +8,19 @@ import { BudgetBar } from "./BudgetBar";
 import { AISummary } from "./AISummary";
 import { BudgetCard } from "./BudgetCard";
 import { HeadlineInsight } from "./HeadlineInsight";
-import { CostEfficiencyQuadrant } from "./CostEfficiencyQuadrant";
-import { AISuggestPanel } from "./AISuggestPanel";
-import { FeatureValueMatrix } from "./FeatureValueMatrix";
 import { formatForPersona } from "@/app/lib/utils";
-import { LENS_AGENT_NAME } from "@/app/lib/lensaiCopy";
 
 interface ExecutiveViewProps {
   enriched: EnrichedApp[];
   onSelect: (app: App) => void;
   selected: App | null;
-  subTab: ExecutiveSubTab;
-  onSubTabChange: (t: ExecutiveSubTab) => void;
 }
 
 export function ExecutiveView({
   enriched,
   onSelect,
   selected,
-  subTab,
-  onSubTabChange,
 }: ExecutiveViewProps) {
-  const [quadrantApp, setQuadrantApp] = useState<App | null>(null);
-
   const portfolio = {
     total: enriched.length,
     healthy: enriched.filter((a) => a.budget.level === "SAFE").length,
@@ -54,7 +43,6 @@ export function ExecutiveView({
         ? `${portfolio.atRisk} app${portfolio.atRisk > 1 ? "s" : ""} at risk based on budget`
         : "All applications remain within budget health targets";
 
-  const apps = enriched.map((e) => e.app);
   const avgResponseMs = Math.round(
     enriched.reduce((sum, e) => sum + e.app.metrics.responseMs, 0) /
       Math.max(1, enriched.length),
@@ -65,50 +53,6 @@ export function ExecutiveView({
 
   return (
     <div className="p-6 flex flex-col gap-6 overflow-y-auto h-full max-w-[1400px] mx-auto w-full">
-      <div
-        className="flex border-b border-border -mt-0 shrink-0"
-        role="tablist"
-        aria-label="Executive pages"
-      >
-        {(
-          [
-            { id: "overview" as const, label: "Overview" },
-            { id: "system-efficiency" as const, label: "System Efficiency" },
-          ] as const
-        ).map(({ id, label }) => {
-          const isSel = subTab === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              id={`exec-tab-${id}`}
-              aria-selected={isSel}
-              aria-controls={
-                id === "overview"
-                  ? "exec-panel-overview"
-                  : "exec-system-efficiency"
-              }
-              tabIndex={isSel ? 0 : -1}
-              onClick={() => onSubTabChange(id)}
-              className={`flex-1 sm:flex-none sm:px-6 bg-transparent border-none py-3 px-2 cursor-pointer text-[12px] font-display font-medium tracking-[0.04em] transition-colors focus-visible:outline-2 focus-visible:outline-brand/40 ${
-                isSel
-                  ? "text-brand border-b-2 border-b-brand -mb-px"
-                  : "text-txt-muted border-b-2 border-b-transparent hover:text-txt"
-              }`}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
-
-      {subTab === "overview" && (
-        <div
-          id="exec-panel-overview"
-          role="tabpanel"
-          aria-labelledby="exec-tab-overview"
-        >
       {/* Narrative */}
       <div
         id="exec-overview"
@@ -254,60 +198,6 @@ export function ExecutiveView({
           <AISummary enriched={enriched} />
         </Card>
       </div>
-
-      {/* SECTION 5 — Feature Value Matrix (moved to bottom) */}
-      <div id="exec-features" className="animate-fade-in-up stagger-4">
-        <FeatureValueMatrix apps={apps} selectedApp={quadrantApp} />
-      </div>
-        </div>
-      )}
-
-      {subTab === "system-efficiency" && (
-        <section
-          id="exec-system-efficiency"
-          role="tabpanel"
-          aria-labelledby="exec-tab-system-efficiency"
-          className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-5 animate-fade-in-up stagger-1"
-        >
-          <Card variant="bordered" className="!p-5">
-            <div className="mb-1">
-              <h2 className="text-lg font-display font-bold text-txt">
-                System Efficiency
-              </h2>
-              <p className="text-sm text-txt-muted mt-0.5">
-                Cost vs usage at a glance
-              </p>
-            </div>
-            <div className="flex items-start justify-between gap-3 mb-3 mt-4">
-              <div>
-                <Label>Cost Efficiency Quadrant</Label>
-                <p className="text-[11px] text-txt-dim mt-0.5">
-                  Bubble = budget allocation · Click any app to run{" "}
-                  {LENS_AGENT_NAME} for an app briefing.
-                </p>
-              </div>
-              {quadrantApp && (
-                <button
-                  type="button"
-                  onClick={() => setQuadrantApp(null)}
-                  className="h-10 px-3 text-[11px] text-txt-muted border border-border rounded hover:text-brand hover:border-brand/40 transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
-                >
-                  Clear selection
-                </button>
-              )}
-            </div>
-            <CostEfficiencyQuadrant
-              apps={apps}
-              selectedId={quadrantApp?.id}
-              onSelect={(a) =>
-                setQuadrantApp(quadrantApp?.id === a.id ? null : a)
-              }
-            />
-          </Card>
-
-          <AISuggestPanel app={quadrantApp} />
-        </section>
-      )}
     </div>
   );
 }
