@@ -8,11 +8,11 @@ interface HeaderProps {
 
 const VIEW_TITLES: Record<ViewMode, { title: string; subtitle: string }> = {
   executive: {
-    title: "Executive Overview",
+    title: " Budget Health Monitoring",
     subtitle: "Portfolio health · Budget · Risk signals",
   },
   ops: {
-    title: "Operations Dashboard",
+    title: "Operation",
     subtitle: "Performance · Latency · API telemetry",
   },
   system: {

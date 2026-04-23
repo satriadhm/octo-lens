@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { ViewMode } from "@/app/lib/types";
 import { OctoLensLogo } from "./OctoLensLogo";
 
@@ -14,18 +14,24 @@ interface SubItem {
   label: string;
 }
 
-interface NavItem {
-  id: ViewMode;
+interface ExecArea {
+  id: Extract<ViewMode, "executive" | "system">;
   label: string;
   icon: string;
   subItems: SubItem[];
 }
 
-const NAV_ITEMS: NavItem[] = [
+const ICON_BUDGET = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>`;
+
+const ICON_SYSTEM = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2.5M8 12.5V15M15 8h-2.5M3.5 8H1M13.2 2.8l-1.8 1.8M4.6 11.4l-1.8 1.8M13.2 13.2l-1.8-1.8M4.6 4.6L2.8 2.8"/></svg>`;
+
+const ICON_OPS = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="2,11 6,6 9,9 14,3"/><circle cx="14" cy="3" r="1.5" fill="currentColor" stroke="none"/></svg>`;
+
+const EXEC_AREAS: ExecArea[] = [
   {
     id: "executive",
-    label: "Executive",
-    icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>`,
+    label: " Budget Health Monitoring",
+    icon: ICON_BUDGET,
     subItems: [
       { id: "exec-overview", label: "Portfolio Overview" },
       { id: "exec-kpis", label: "KPI Summary" },
@@ -36,34 +42,31 @@ const NAV_ITEMS: NavItem[] = [
   {
     id: "system",
     label: "System Efficiency",
-    icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2.5M8 12.5V15M15 8h-2.5M3.5 8H1M13.2 2.8l-1.8 1.8M4.6 11.4l-1.8 1.8M13.2 13.2l-1.8-1.8M4.6 4.6L2.8 2.8"/></svg>`,
+    icon: ICON_SYSTEM,
     subItems: [
       { id: "sys-overview", label: "Overview" },
       { id: "sys-quadrant", label: "Cost efficiency quadrant" },
       { id: "sys-features", label: "Feature value matrix" },
     ],
   },
-  {
-    id: "ops",
-    label: "Operations",
-    icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="2,11 6,6 9,9 14,3"/><circle cx="14" cy="3" r="1.5" fill="currentColor" stroke="none"/></svg>`,
-    subItems: [
-      { id: "ops-kpis", label: "KPI Strip" },
-      { id: "ops-service-health", label: "Service Health" },
-      { id: "ops-app-status", label: "App Status" },
-      { id: "ops-latency", label: "Latency Hotspots" },
-      { id: "ops-traffic", label: "Traffic Patterns" },
-      { id: "ops-slow-ops", label: "Slow Operations" },
-      { id: "ops-usage", label: "Usage & Consumers" },
-    ],
-  },
 ];
+
+const OPS_SUB_ITEMS: SubItem[] = [
+  { id: "ops-kpis", label: "KPI Strip" },
+  { id: "ops-service-health", label: "Service Health" },
+  { id: "ops-app-status", label: "App Status" },
+  { id: "ops-latency", label: "Latency Hotspots" },
+  { id: "ops-traffic", label: "Traffic Patterns" },
+  { id: "ops-slow-ops", label: "Slow Operations" },
+  { id: "ops-usage", label: "Usage & Consumers" },
+];
+
+type Suite = "executive" | "operation";
 
 function scrollToSection(sectionId: string) {
   const el = document.getElementById(sectionId);
   if (!el) return;
 
-  // Find the scrollable parent (first ancestor with overflow-y: auto or scroll)
   let container: HTMLElement | null = el.parentElement;
   while (container && container !== document.body) {
     const overflow = window.getComputedStyle(container).overflowY;
@@ -74,7 +77,7 @@ function scrollToSection(sectionId: string) {
   if (container) {
     const containerTop = container.getBoundingClientRect().top;
     const elTop = el.getBoundingClientRect().top;
-    const offset = elTop - containerTop - 16; // 16px breathing room
+    const offset = elTop - containerTop - 16;
     container.scrollBy({ top: offset, behavior: "smooth" });
   } else {
     el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -85,8 +88,38 @@ export function Sidebar({ mode, onModeChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [activeSubItem, setActiveSubItem] = useState<string | null>(null);
 
-  const handleTopNav = useCallback(
-    (id: ViewMode) => {
+  const suite: Suite = mode === "ops" ? "operation" : "executive";
+
+  const activeExecArea = useMemo(
+    () => EXEC_AREAS.find((a) => a.id === mode) ?? EXEC_AREAS[0],
+    [mode],
+  );
+
+  const subNavContext = useMemo(() => {
+    if (mode === "ops") {
+      return { sectionLabel: "Operation", subItems: OPS_SUB_ITEMS };
+    }
+    return {
+      sectionLabel: activeExecArea.label,
+      subItems: activeExecArea.subItems,
+    };
+  }, [mode, activeExecArea]);
+
+  const handleSuiteToggle = useCallback(
+    (next: Suite) => {
+      if (next === suite) return;
+      if (next === "operation") {
+        onModeChange("ops");
+      } else {
+        onModeChange("executive");
+      }
+      setActiveSubItem(null);
+    },
+    [suite, onModeChange],
+  );
+
+  const handleExecArea = useCallback(
+    (id: Extract<ViewMode, "executive" | "system">) => {
       if (id !== mode) {
         onModeChange(id);
         setActiveSubItem(null);
@@ -100,14 +133,18 @@ export function Sidebar({ mode, onModeChange }: SidebarProps) {
     scrollToSection(subId);
   }, []);
 
-  const activeNav = NAV_ITEMS.find((n) => n.id === mode)!;
+  const collapsedTargets: { mode: ViewMode; icon: string; label: string }[] =
+    [
+      { mode: "executive", icon: ICON_BUDGET, label: " Budget Health Monitoring" },
+      { mode: "system", icon: ICON_SYSTEM, label: "System Efficiency" },
+      { mode: "ops", icon: ICON_OPS, label: "Operation" },
+    ];
 
   return (
     <aside
       className="flex-shrink-0 bg-surface border-r border-border flex flex-col transition-[width] duration-200 ease-in-out h-full"
       style={{ width: collapsed ? 56 : 220 }}
     >
-      {/* ── Logo ─────────────────────────────────────────── */}
       <div className="px-3.5 py-3.5 border-b border-border flex items-center gap-2.5 min-h-[52px]">
         {collapsed ? (
           <div className="flex items-center justify-center w-full">
@@ -120,60 +157,128 @@ export function Sidebar({ mode, onModeChange }: SidebarProps) {
         )}
       </div>
 
-      {/* ── Top-level nav ────────────────────────────────── */}
-      <nav
-        className="pt-2 pb-1 border-b border-border"
-        role="navigation"
-        aria-label="Dashboard views"
-      >
-        {NAV_ITEMS.map((item) => {
-          const isActive = mode === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => handleTopNav(item.id)}
-              aria-current={isActive ? "page" : undefined}
-              title={collapsed ? item.label : undefined}
-              type="button"
-              className={`flex items-center gap-3 my-0.5 mx-1.5 px-3 py-2.5 rounded-lg cursor-pointer border-none transition-all duration-150 text-left focus-visible:outline-2 focus-visible:outline-brand/40 ${
-                isActive
-                  ? "bg-brand-light text-brand font-semibold"
-                  : "bg-transparent text-txt-muted hover:bg-surface-dim hover:text-txt"
-              }`}
-              style={{ width: collapsed ? 40 : "calc(100% - 12px)" }}
+      {collapsed ? (
+        <nav
+          className="pt-2 pb-1 border-b border-border flex flex-col items-center gap-1"
+          role="navigation"
+          aria-label="Dashboard views"
+        >
+          {collapsedTargets.map((t) => {
+            const isActive = mode === t.mode;
+            return (
+              <button
+                key={t.mode}
+                onClick={() => {
+                  onModeChange(t.mode);
+                  setActiveSubItem(null);
+                }}
+                aria-current={isActive ? "page" : undefined}
+                title={t.label}
+                type="button"
+                className={`flex items-center justify-center p-2 rounded-lg cursor-pointer border-none transition-all duration-150 focus-visible:outline-2 focus-visible:outline-brand/40 ${
+                  isActive
+                    ? "bg-brand-light text-brand"
+                    : "bg-transparent text-txt-muted hover:bg-surface-dim hover:text-txt"
+                }`}
+                style={{ width: 40, height: 40 }}
+              >
+                <span
+                  className="flex-shrink-0 w-4 h-4"
+                  dangerouslySetInnerHTML={{ __html: t.icon }}
+                />
+              </button>
+            );
+          })}
+        </nav>
+      ) : (
+        <>
+          <div className="px-2 pt-2 pb-2 border-b border-border">
+            <div
+              className="flex rounded-lg bg-surface-dim p-0.5 gap-0.5"
+              role="tablist"
+              aria-label="Primary area"
             >
-              <span
-                className="flex-shrink-0 w-4 h-4"
-                dangerouslySetInnerHTML={{ __html: item.icon }}
-              />
-              {!collapsed && (
-                <span className="text-[12.5px] font-sans leading-none truncate flex-1">
-                  {item.label}
-                </span>
-              )}
-              {isActive && !collapsed && (
-                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand flex-shrink-0 animate-status-pulse" />
-              )}
-            </button>
-          );
-        })}
-      </nav>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={suite === "executive"}
+                onClick={() => handleSuiteToggle("executive")}
+                className={`flex-1 min-w-0 rounded-md px-2 py-2 text-[11px] font-sans font-semibold leading-none transition-colors cursor-pointer border-none focus-visible:outline-2 focus-visible:outline-brand/40 ${
+                  suite === "executive"
+                    ? "bg-surface text-brand shadow-sm"
+                    : "bg-transparent text-txt-muted hover:text-txt"
+                }`}
+              >
+                Executive
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={suite === "operation"}
+                onClick={() => handleSuiteToggle("operation")}
+                className={`flex-1 min-w-0 rounded-md px-2 py-2 text-[11px] font-sans font-semibold leading-none transition-colors cursor-pointer border-none focus-visible:outline-2 focus-visible:outline-brand/40 ${
+                  suite === "operation"
+                    ? "bg-surface text-brand shadow-sm"
+                    : "bg-transparent text-txt-muted hover:text-txt"
+                }`}
+              >
+                Operation
+              </button>
+            </div>
+          </div>
 
-      {/* ── Sub-navigation (only when expanded) ─────────── */}
+          {suite === "executive" && (
+            <nav
+              className="pt-2 pb-1 border-b border-border"
+              role="navigation"
+              aria-label="Executive areas"
+            >
+              {EXEC_AREAS.map((area) => {
+                const isActive = mode === area.id;
+                return (
+                  <button
+                    key={area.id}
+                    onClick={() => handleExecArea(area.id)}
+                    aria-current={isActive ? "page" : undefined}
+                    type="button"
+                    className={`flex items-center gap-3 my-0.5 mx-1.5 px-3 py-2.5 rounded-lg cursor-pointer border-none transition-all duration-150 text-left focus-visible:outline-2 focus-visible:outline-brand/40 ${
+                      isActive
+                        ? "bg-brand-light text-brand font-semibold"
+                        : "bg-transparent text-txt-muted hover:bg-surface-dim hover:text-txt"
+                    }`}
+                    style={{ width: "calc(100% - 12px)" }}
+                  >
+                    <span
+                      className="flex-shrink-0 w-4 h-4"
+                      dangerouslySetInnerHTML={{ __html: area.icon }}
+                    />
+                    <span className="text-[12.5px] font-sans leading-none truncate flex-1">
+                      {area.label}
+                    </span>
+                    {isActive && (
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand flex-shrink-0 animate-status-pulse" />
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          )}
+        </>
+      )}
+
       {!collapsed && (
         <nav
           className="flex-1 overflow-y-auto py-2"
           role="navigation"
-          aria-label={`${activeNav.label} sections`}
+          aria-label={`${subNavContext.sectionLabel} sections`}
         >
-          {/* Section group label */}
           <div className="px-4 pb-1.5 pt-1">
             <span className="text-[10px] font-display font-semibold uppercase tracking-[0.08em] text-txt-dim">
-              {activeNav.label}
+              {subNavContext.sectionLabel}
             </span>
           </div>
 
-          {activeNav.subItems.map((sub) => {
+          {subNavContext.subItems.map((sub) => {
             const isSubActive = activeSubItem === sub.id;
             return (
               <button
@@ -187,7 +292,6 @@ export function Sidebar({ mode, onModeChange }: SidebarProps) {
                 }`}
                 style={{ width: "calc(100% - 12px)" }}
               >
-                {/* Vertical connector dot */}
                 <span
                   className={`flex-shrink-0 w-1.5 h-1.5 rounded-full transition-colors ${
                     isSubActive ? "bg-brand" : "bg-border"
@@ -202,10 +306,8 @@ export function Sidebar({ mode, onModeChange }: SidebarProps) {
         </nav>
       )}
 
-      {/* Spacer when collapsed (sub-nav is hidden) */}
       {collapsed && <div className="flex-1" />}
 
-      {/* ── Status bar ───────────────────────────────────── */}
       <div className="border-t border-border px-3.5 py-3 flex items-center gap-2">
         <div className="w-1.5 h-1.5 rounded-full bg-ok animate-status-pulse flex-shrink-0" />
         {!collapsed && (
@@ -221,7 +323,6 @@ export function Sidebar({ mode, onModeChange }: SidebarProps) {
         )}
       </div>
 
-      {/* ── Collapse toggle ──────────────────────────────── */}
       <button
         onClick={() => setCollapsed((c) => !c)}
         type="button"
