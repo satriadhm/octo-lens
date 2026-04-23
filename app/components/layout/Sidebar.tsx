@@ -7,6 +7,8 @@ import { OctoLensLogo } from "./OctoLensLogo";
 interface SidebarProps {
   mode: ViewMode;
   onModeChange: (mode: ViewMode) => void;
+  /** Fires before section scroll; use to switch in-view tabs (e.g. Executive). */
+  onSubItemClick?: (sectionId: string) => void;
 }
 
 interface SubItem {
@@ -28,6 +30,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>`,
     subItems: [
       { id: "exec-overview", label: "Portfolio Overview" },
+      { id: "exec-system-efficiency", label: "System Efficiency" },
       { id: "exec-kpis", label: "KPI Summary" },
       { id: "exec-budget", label: "Budget Health" },
       { id: "exec-risks", label: "Top Risks" },
@@ -72,7 +75,11 @@ function scrollToSection(sectionId: string) {
   }
 }
 
-export function Sidebar({ mode, onModeChange }: SidebarProps) {
+export function Sidebar({
+  mode,
+  onModeChange,
+  onSubItemClick,
+}: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [activeSubItem, setActiveSubItem] = useState<string | null>(null);
 
@@ -86,10 +93,19 @@ export function Sidebar({ mode, onModeChange }: SidebarProps) {
     [mode, onModeChange],
   );
 
-  const handleSubItem = useCallback((subId: string) => {
-    setActiveSubItem(subId);
-    scrollToSection(subId);
-  }, []);
+  const handleSubItem = useCallback(
+    (subId: string) => {
+      setActiveSubItem(subId);
+      onSubItemClick?.(subId);
+      const doScroll = () => scrollToSection(subId);
+      if (onSubItemClick) {
+        window.setTimeout(doScroll, 120);
+      } else {
+        doScroll();
+      }
+    },
+    [onSubItemClick],
+  );
 
   const activeNav = NAV_ITEMS.find((n) => n.id === mode)!;
 

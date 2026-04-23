@@ -123,6 +123,8 @@ export interface EnrichedApp {
 
 export type ViewMode = "executive" | "ops";
 
+export type ExecutiveSubTab = "overview" | "system-efficiency";
+
 export interface SlowQuery {
   action: "http" | "file-transfer" | "db";
   durationMs: number;
