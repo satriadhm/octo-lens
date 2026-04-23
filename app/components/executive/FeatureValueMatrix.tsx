@@ -22,6 +22,10 @@ interface Row {
   usage30d: number;
 }
 
+function featureRowKey(r: Row) {
+  return `${r.app.id}-${r.investment.path}`;
+}
+
 type SortKey = "name" | "module" | "usage" | "trend" | "classification" | "investment";
 type SortDir = "asc" | "desc";
 
@@ -80,13 +84,12 @@ export function FeatureValueMatrix({
 
   const [sortKey, setSortKey] = useState<SortKey>("classification");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
-  const [expanded, setExpanded] = useState<string | null>(null);
   const [sidebarRow, setSidebarRow] = useState<Row | null>(null);
   const [page, setPage] = useState(1);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setExpanded(null);
+      if (e.key === "Escape") setSidebarRow(null);
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
@@ -126,6 +129,7 @@ export function FeatureValueMatrix({
 
   useEffect(() => {
     setPage(1);
+    setSidebarRow(null);
   }, [sortKey, sortDir, selectedApp?.id, apps.length]);
 
   useEffect(() => {
@@ -134,7 +138,7 @@ export function FeatureValueMatrix({
   }, [totalPages]);
 
   useEffect(() => {
-    setExpanded(null);
+    setSidebarRow(null);
   }, [page]);
 
   const pageRows = useMemo(() => {
@@ -211,20 +215,21 @@ export function FeatureValueMatrix({
         </p>
         {zombies.length > 0 && (
           <span className="text-[11px] font-semibold text-danger shrink-0 uppercase tracking-[0.08em]">
-            Pertimbangkan sunset
+            Tinjau rasionalisasi portofolio
           </span>
         )}
       </div>
 
       <div className="block md:hidden px-3 py-3 space-y-2">
         {pageRows.map((row) => {
-          const rowKey = `${row.app.id}-${row.investment.path}`;
-          const isOpen = expanded === rowKey;
+          const rKey = featureRowKey(row);
+          const isOpen =
+            sidebarRow !== null && featureRowKey(sidebarRow) === rKey;
           const isZombie =
             row.investment.classification === "DEPRECATION CANDIDATE";
           return (
             <div
-              key={rowKey}
+              key={rKey}
               className={`rounded-xl border px-3.5 py-3 ${
                 isZombie
                   ? "border-danger/30 bg-danger/5"
@@ -259,8 +264,7 @@ export function FeatureValueMatrix({
               <button
                 type="button"
                 onClick={() => {
-                  setExpanded(isOpen ? null : rowKey);
-                  setSidebarRow(row);
+                  setSidebarRow(isOpen ? null : row);
                 }}
                 aria-expanded={isOpen}
                 className="mt-2.5 h-11 px-3 rounded-md border border-border text-[12px] font-semibold text-txt hover:bg-surface-dim focus-visible:outline-2 focus-visible:outline-brand/40"
@@ -325,16 +329,16 @@ export function FeatureValueMatrix({
           </thead>
           <tbody>
             {pageRows.map((row) => {
-              const rowKey = `${row.app.id}-${row.investment.path}`;
-              const isOpen = expanded === rowKey;
+              const rKey = featureRowKey(row);
+              const isOpen =
+                sidebarRow !== null && featureRowKey(sidebarRow) === rKey;
               return (
                 <FeatureRow
-                  key={rowKey}
+                  key={rKey}
                   row={row}
                   isOpen={isOpen}
                   onToggle={() => {
-                    setExpanded(isOpen ? null : rowKey);
-                    setSidebarRow(row);
+                    setSidebarRow(isOpen ? null : row);
                   }}
                   hideAppName={!!selectedApp}
                 />
@@ -421,8 +425,7 @@ export function FeatureValueMatrix({
     </section>
     <RecommendationSidebar
       row={sidebarRow}
-      isOpen={expanded !== null}
-      onClose={() => setExpanded(null)}
+      onClose={() => setSidebarRow(null)}
     />
     </>
   );
@@ -624,19 +627,15 @@ const SIDEBAR_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 
 function RecommendationSidebar({
   row,
-  isOpen,
   onClose,
 }: {
   row: Row | null;
-  isOpen: boolean;
   onClose: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement | null>(null);
-  const hasContent = row !== null;
-  const visible = isOpen && hasContent;
 
   useEffect(() => {
-    if (!visible) return;
+    if (row == null) return;
     const focusTimer = window.setTimeout(() => {
       closeRef.current?.focus();
     }, 280);
@@ -648,69 +647,60 @@ function RecommendationSidebar({
       window.clearTimeout(focusTimer);
       window.removeEventListener("keydown", onKey);
     };
-  }, [visible, onClose]);
+  }, [row, onClose]);
 
   useEffect(() => {
-    if (!visible) return;
+    if (row == null) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [visible]);
+  }, [row]);
+
+  if (row == null) return null;
 
   return (
     <>
       <div
         onClick={onClose}
         aria-hidden
-        className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-300 motion-reduce:transition-none ${
-          visible ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-300 motion-reduce:transition-none opacity-100"
         style={{ transitionTimingFunction: SIDEBAR_EASE }}
       />
       <aside
         aria-label="AI feature recommendation details"
-        aria-hidden={!visible}
-        className={`fixed top-0 right-0 h-full w-full sm:w-[440px] bg-surface border-l border-border z-50 flex flex-col shadow-[-16px_0_48px_-16px_rgba(0,0,0,0.25)] will-change-transform transition-transform duration-[320ms] motion-reduce:transition-none ${
-          visible
-            ? "translate-x-0"
-            : "translate-x-full pointer-events-none"
-        }`}
+        className="fixed top-0 right-0 h-full w-full sm:w-[440px] bg-surface border-l border-border z-50 flex flex-col shadow-[-16px_0_48px_-16px_rgba(0,0,0,0.25)] will-change-transform transition-transform duration-[320ms] motion-reduce:transition-none translate-x-0"
         style={{ transitionTimingFunction: SIDEBAR_EASE }}
       >
-        {hasContent && (
-          <>
-            <header className="flex items-start justify-between gap-3 px-5 py-4 border-b border-border">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] uppercase tracking-[0.14em] text-brand font-semibold">
-                  AI Feature Details
-                </p>
-                <code className="mt-1.5 block text-[12px] text-txt font-mono break-all leading-snug">
-                  {row.endpoint.path}
-                </code>
-                <div className="mt-2.5 flex items-center gap-2 flex-wrap">
-                  <ClassBadge classification={row.investment.classification} />
-                  <span className="text-[11px] text-txt-muted truncate">
-                    {row.investment.module}
-                  </span>
-                </div>
-              </div>
-              <button
-                ref={closeRef}
-                type="button"
-                onClick={onClose}
-                aria-label="Close details"
-                className="h-9 w-9 rounded-md hover:bg-surface-dim text-txt-muted hover:text-txt flex items-center justify-center text-lg shrink-0 transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
-              >
-                ×
-              </button>
-            </header>
-            <div className="flex-1 overflow-y-auto px-5 py-5">
-              <SidebarBody row={row} />
+        <header className="flex items-start justify-between gap-3 px-5 py-4 border-b border-border">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-brand font-semibold">
+              AI Feature Details
+            </p>
+            <code className="mt-1.5 block text-[12px] text-txt font-mono break-all leading-snug">
+              {row.endpoint.path}
+            </code>
+            <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+              <ClassBadge classification={row.investment.classification} />
+              <span className="text-[11px] text-txt-muted truncate">
+                {row.investment.module}
+              </span>
             </div>
-          </>
-        )}
+          </div>
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            aria-label="Close details"
+            className="h-9 w-9 rounded-md hover:bg-surface-dim text-txt-muted hover:text-txt flex items-center justify-center text-lg shrink-0 transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
+          >
+            ×
+          </button>
+        </header>
+        <div className="flex-1 overflow-y-auto px-5 py-5">
+          <SidebarBody row={row} />
+        </div>
       </aside>
     </>
   );
