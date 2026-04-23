@@ -15,6 +15,9 @@ export function deriveProductRecommendation(
 ): string {
   const { classification, trend, investedIDR } = inv;
   const adoption = endpoint.adoption;
+  const p95Val = Math.round(endpoint.p95Ms ?? 0);
+  const errPct = (endpoint.errorRate ?? 0).toFixed(2);
+  const idrText = idr(investedIDR);
 
   const isHighInvestment = investedIDR > HIGH_INVESTMENT_IDR;
   const isLowAdoption = adoption < LOW_ADOPTION_PCT;
@@ -22,100 +25,114 @@ export function deriveProductRecommendation(
 
   if (isHighAdoption && trend === "down" && classification === "STRATEGIC ASSET") {
     return (
-      "Optimize — Fitur dengan adopsi luas mengalami degradasi minat; investigasi regresi performa, " +
-      "pergeseran kebutuhan pasar, atau friksi UX. Lindungi pengalaman utama dengan SLA, observabilitas, " +
-      "dan headroom kapasitas di puncak trafik."
+        "Pemakaian fitur pilar melemah meski minat sempat tinggi, sehingga jalan kritis percepatan pelanggan terasa guncang. " +
+        `Dengan adopsi ${adoption}%, P95 di ${p95Val}ms, error rate ${errPct}%, dan investasi ${idrText} masih tercatat, sinyal teknis harus disandingkan laju penurunan minat supaya puncak beban aman. ` +
+        "Raporkan data pemakaian 14 hari ke depan, pilih tiga alur paling sibuk, lalu rencanakan uji coba perbaikan kecil yang terukur sebelum puncak trafik berikutnya."
     );
   }
 
   if (isLowAdoption && trend === "up") {
     return (
-      "Scale — Fitur mulai mendapat traksi; beri dukungan go-to-market tambahan dan permudah onboarding " +
-      "untuk mempercepat siklus adopsi."
+      "Friksi pendaftaran sudah mendingan dan traksi tumbuh, tapi basis pengguna relatif sempit. " +
+        `Dengan adopsi ${adoption}%, P95 di ${p95Val}ms, error rate ${errPct}%, sementara investasi ${idrText} belum penuh terbayar, hambatannya hampir pasti bukan murni keandalan. ` +
+        "Tempelkan pemanduan tiga layar pasca-login dan sorot ajakan bertindak ke fitur di halaman depan, lalu ukur lonjakan pemakaian dalam 14 hari."
     );
   }
 
   if (isLowAdoption && trend === "dead") {
     return (
-      "Rationalize — Fitur zombie: adopsi " +
-      adoption +
-      "% dengan tren mati. Aset ini memakan biaya pemeliharaan tanpa imbal hasil bisnis yang jelas; " +
-      "jadwalkan rencana sunset atau konsolidasi ke modul utama."
+      "Fitur ini hampir tidak tumbuh: minat sekarat, basis pengguna tipis, dan sinyal pertumbuhan hilang. " +
+        `Adopsi hanya ${adoption}%, P95 ${p95Val}ms, error ${errPct}%, sementara investasi ${idrText} terus tercatat sehingga perawatan makan daya tim tanpa laju bisnis. ` +
+        "Tetapkan workshop 90 menit pekan depan, susun pilihan sunset atau pengalihan lalu lintas ke modul inti, lalu pilih tanggal teknis penonaktifan."
     );
   }
 
   if (classification === "STRATEGIC ASSET") {
     if (trend === "down") {
       return (
-        "Defend & excel — Sinyal market saturation atau friction detection: audit UX dan alur kritis. " +
-        "Pastikan headroom kapasitas aman saat trafik puncak agar pengalaman inti tetap stabil."
+        "Laju minat melemah di jalur pilar, sehingga perhatian pengguna sering terseret ke pilihan lain. " +
+          `Dengan adopsi ${adoption}%, P95 di ${p95Val}ms, error ${errPct}%, dan porsi dana ${idrText} sudah ditanam, keseimbangan perawatan kembali tergelincir. ` +
+          "Agendakan audit tiga hari fokus regresi UX, tampilkan lima poin temuan, lalu rilis perbaikan terukur pada alur tumpahan terbesar."
       );
     }
     if (trend === "flat") {
       return (
-        "Defend & excel — Trafik datar: pantau friksi dan cannibalization fitur. Pertahankan P95 di bawah SLA " +
-        "dan cadangan kapasitas untuk segmen pengguna terbesar."
+        "Lalu lintas fitur pilar rata, jadi sinyal pertumbuhan alami tidak muncul meski puncak panggilan belum terganggu. " +
+          `Adopsi ${adoption}%, P95 ${p95Val}ms, error ${errPct}%, serta investasi ${idrText} menunjukkan kebutuhan cadangan puncak, bukan ledakan. ` +
+          `Jalankan uji puncak beban 30 menit di staging, bandingkan waktu p95 uji terhadap ${p95Val}ms produksi, lalu setel pemberitahuan on-call bila produksi melebihi p95 uji.`
       );
     }
     return (
-      "Defend & excel — Backbone layanan stabil; jaga performa P95 konsisten dan biaya variabel tetap terkendali " +
-      "saat skala bertumbuh."
+      "Tulang punggung layanan stabil dan tren minat cenderung naik, jadi waktu mendorong pemanfaatan sebelum tekanan biaya. " +
+        `Dengan adopsi ${adoption}%, P95 ${p95Val}ms, error ${errPct}%, plus investasi ${idrText} yang perlu divalidasi hasil, risiko tumpukan fitur tampil kecil. ` +
+        `Bandingkan waktu p95 produksi tiap puncak mingguan; jika melampaui ${p95Val}ms berturut-turut, tambah sumber puncak, lalu cek cadangan puncak sebelum rilis kritis.`
     );
   }
 
   if (classification === "EMERGING ASSET") {
     if (trend === "flat") {
       return (
-        "Discover — Discovery gap: potensi fitur belum terbuka sepenuhnya; pertimbangkan optimasi onboarding " +
-        "dan penyorotan nilai di produk agar pengguna baru lebih cepat menemukan manfaat."
+        "Fitur muda tampil di peluncuran, tapi pemanfaatannya dangkal sehingga sinyal nilai hanya setengah tercium. " +
+          `Hanya ${adoption}% yang mengaktifkan alur, P95 di ${p95Val}ms, error ${errPct}%, sementara investasi ${idrText} belum tercatat penuh di perilaku. ` +
+          "Taruh pemanduan tiga layar pasca-aktivasi, ukur laju selesai tiap layar, lalu sederhanakan layar tersumbat paling lama bila laju selesai tidak naik 14 hari ke depan."
       );
     }
     if (trend === "up") {
       return (
-        "Discover — Momentum adopsi positif; perkuat edukasi in-app, aktivasi kohort, dan sinyal sukses awal " +
-        "untuk mempercepat product-market fit."
+        "Gelombang pemanfaatan fitur muda tumbuh, tapi cakupan pengguna kian tipis. " +
+          `Dengan adopsi ${adoption}%, P95 ${p95Val}ms, error ${errPct}%, plus investasi ${idrText} yang harus ditarik, jendela penguatan sinyal terbuka. ` +
+          "Kirim notifikasi hari-tiga hanya ke kohort pendaftar baru, targetkan 15% batas tercapai dalam 30 hari, lalu matikan pemberitahuan jika respons di bawah ambang."
       );
     }
     if (trend === "down") {
       return (
-        "Discover — Validasi ulang problem–solution fit; sesuaikan positioning atau kurangi kompleksitas " +
-        "sebelum investasi engineering bertambah."
+        "Gairah awal mendingin sebelum problem–solution fit tercatat, jadi sinyal pasar tampak bercampur. " +
+          `Adopsi hanya ${adoption}%, P95 ${p95Val}ms, error ${errPct}%, dan porsi ${idrText} tercatat belum cukup menekan penurunan minat. ` +
+          "Jadwalkan lima wawancara pengguna 45 menit, rekam top tiga poin pergeseran kebutuhan, lalu sederhanakan alur paling sibuk dalam satu rilis 30 hari."
       );
     }
     return (
-      "Rationalize — Tren mati pada fitur muda; putuskan kill atau pivot singkat untuk menghindari utang teknis prematur."
+      "Kegairahan fitur muda gugur sebelum jejak pertumbuhan muncul, sehingga utang teknis dini menggantung. " +
+        `Dengan adopsi ${adoption}%, P95 di ${p95Val}ms, error ${errPct}%, sementara sisa investasi ${idrText} menanti keputusan, sinyal mati tampir pasti. ` +
+        "Buat dokumen go/no-go dua halaman, tetapkan batas 14 hari, lalu pilih kill, pivot fitur, atau sederhanakan cakupan sebelum siklus pengerjaan menumpuk."
     );
   }
 
   if (classification === "UNDERPERFORMING") {
     if (isHighInvestment) {
       return (
-        "Optimize — Investment pivot: " +
-        idr(investedIDR) +
-        " pada fitur dengan efisiensi rendah relatif terhadap trafik. Lakukan root cause pada alur UX " +
-        "atau pertimbangkan membatasi scope fungsionalitas."
+        "Banyak uang tampak tercatat di sini, namun nilai yang dirasakan jatuh saat panggilan tumbuh, jadi porsi papan tulis menipis. " +
+          `Investasi tercatat ${idrText}, adopsi ${adoption}%, P95 di ${p95Val}ms, error ${errPct}% bukan tanda sempurna kecocokan, melainkan tekanan biaya. ` +
+          "Luncurkan root cause 5-why pekan depan, kunci tiga temuan, lalu sempitkan cakupan fitur paling mahal bila laju p95 memburuk dua pemeriksaan berturut-turut."
       );
     }
     return (
-      "Optimize — Value vs. friction di bawah ekspektasi; fokus pada stabilitas teknis, penyederhanaan alur, " +
-      "dan penurunan error rate untuk memulihkan kepercayaan pengguna."
+      "Nilai yang dirasakan berada jauh di bawah tuntutan, sehingga kepercayaan mudah terkikis di titik paling sensitif. " +
+        `Dengan adopsi ${adoption}%, P95 ${p95Val}ms, error ${errPct}%, dan sisa sinyal dana sekitar ${idrText} yang diminta validasi, tekanan teknis tampil nyata. ` +
+        "Tugaskan pembenahan dua bug paling ribut dari log produksi, tindak 48 jam, lalu baca ulang p95 bila panggilan puncak tercapai."
     );
   }
 
   if (classification === "DEPRECATION CANDIDATE") {
     if (trend === "dead" || isLowAdoption) {
       return (
-        "Rationalize — Efisiensi biaya: fitur ini hanya dipakai sekitar " +
-        adoption +
-        "% basis pengguna. Rekomendasi retire atau konsolidasi ke jalur utama untuk mengurangi beban operasional."
+        "Banyak ruang tersisa, kegairahan pengguna sempit, sehingga fitur ini makan biaya sehari-hari. " +
+          `Hanya ${adoption}% basis aktif, P95 di ${p95Val}ms, error ${errPct}%, sementara investasi ${idrText} sukar dibuktikan lewat dampak pemakaian. ` +
+        "Hentikan rilis perbaikan; arahkan sumber daya ke modul paling sibuk, lalu tandai batas 60 hari sebelum pencadangan penuh fitur dinyalakan."
       );
     }
     return (
-      "Monitor — Tinjau pemakaian dan biaya tetap secara mingguan; tentukan cutoff berbasis data sebelum komitmen rilis berikutnya."
+      "Sinyal pemanfaatan campuran, jadi tindakan keras belum tuntas namun tren tidak penuh melemah. " +
+        `Dengan adopsi ${adoption}%, P95 ${p95Val}ms, error ${errPct}%, dan cakupan dana tercatat ${idrText}, waktu cukup untuk baca ulang. ` +
+        "Simpan bacaan panggilan, biaya, dan waktu p95 tiap hari Jumat, lalu putuskan ambang 30% penurunan permintaan sebagai syarat rencana retire sebelum siklus rilis ganda."
     );
   }
 
-  return "Monitor — Pantau metrik penggunaan mingguan untuk menentukan siklus investasi berikutnya.";
+  return (
+    "Portofolio meminta baca siklus: belum cukup sinyal untuk mendorong investasi tajam, namun tren tidak penuh mati. " +
+      `Dengan adopsi ${adoption}%, P95 ${p95Val}ms, error ${errPct}%, sementara cakupan dana tercatat ${idrText} menanti keputusan, sinyal perlu waktu. ` +
+      "Tempel tabel tujuh hari: adopsi, waktu p95, jumlah panggilan, lalu tahan eskalasi investasi bila tiga sinyal tren tidak melambung dalam 30 hari ke depan."
+  );
 }
 
 export type ProductImpactLevel = "TINGGI" | "SEDANG" | "RENDAH";
