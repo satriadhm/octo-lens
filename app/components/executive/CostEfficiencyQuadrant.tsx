@@ -199,16 +199,16 @@ export function CostEfficiencyQuadrant({
         className="pointer-events-none absolute inset-0 pl-[52px] pr-6 pb-9 pt-4 grid grid-cols-2 grid-rows-2 gap-1"
         aria-hidden
       >
-        <div className="flex items-start justify-start min-h-0">
+        <div className="flex items-center justify-center min-h-0 min-w-0 text-center">
           <QuadrantLabel tone="danger">OVERSPENDING</QuadrantLabel>
         </div>
-        <div className="flex items-start justify-end min-h-0">
+        <div className="flex items-center justify-center min-h-0 min-w-0 text-center">
           <QuadrantLabel tone="ok">EFFICIENT</QuadrantLabel>
         </div>
-        <div className="flex items-end justify-start min-h-0">
+        <div className="flex items-center justify-center min-h-0 min-w-0 text-center">
           <QuadrantLabel tone="muted">IDLE</QuadrantLabel>
         </div>
-        <div className="flex items-end justify-end min-h-0">
+        <div className="flex items-center justify-center min-h-0 min-w-0 text-center">
           <QuadrantLabel tone="warn">UNDERPROVISIONED</QuadrantLabel>
         </div>
       </div>
