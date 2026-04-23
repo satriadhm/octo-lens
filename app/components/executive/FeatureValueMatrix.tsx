@@ -9,6 +9,7 @@ import type {
   FeatureTrend,
 } from "@/app/lib/types";
 import { idr } from "@/app/lib/calculators";
+import { LENS_AGENT_NAME } from "@/app/lib/lensaiCopy";
 
 interface FeatureValueMatrixProps {
   apps: App[];
@@ -255,7 +256,7 @@ export function FeatureValueMatrix({
               </div>
               <div className="mt-3">
                 <p className="text-[10px] font-display font-semibold uppercase tracking-[0.12em] text-brand">
-                  AI Recommendation
+                  {LENS_AGENT_NAME} recommendation
                 </p>
                 <p className="mt-1 text-[11px] text-txt-muted line-clamp-2">
                   {row.investment.recommendation}
@@ -313,7 +314,7 @@ export function FeatureValueMatrix({
                 indicator={sortIndicator("classification")}
                 ariaSort={sortKey === "classification" ? sortDir : undefined}
               >
-                AI Classification
+                {LENS_AGENT_NAME} classification
               </Th>
               <Th
                 onSort={() => handleSort("investment")}
@@ -323,7 +324,7 @@ export function FeatureValueMatrix({
                 Est. Investment
               </Th>
               <th className="px-4 py-2.5 text-left text-txt-dim font-semibold font-display text-[11px] tracking-[0.04em]">
-                AI Recommendation
+                {LENS_AGENT_NAME} recommendation
               </th>
             </tr>
           </thead>
@@ -524,7 +525,7 @@ function FeatureRow({
       <td className="px-4 py-3 text-txt-muted text-[11px] max-w-[320px]">
         <span className="line-clamp-2">
           <span className="text-[10px] font-semibold text-brand uppercase tracking-wider mr-1">
-            AI
+            {LENS_AGENT_NAME}
           </span>
           {row.investment.recommendation}
         </span>
@@ -669,14 +670,14 @@ function RecommendationSidebar({
         style={{ transitionTimingFunction: SIDEBAR_EASE }}
       />
       <aside
-        aria-label="AI feature recommendation details"
+        aria-label={`${LENS_AGENT_NAME} feature recommendation details`}
         className="fixed top-0 right-0 h-full w-full sm:w-[440px] bg-surface border-l border-border z-50 flex flex-col shadow-[-16px_0_48px_-16px_rgba(0,0,0,0.25)] will-change-transform transition-transform duration-[320ms] motion-reduce:transition-none translate-x-0"
         style={{ transitionTimingFunction: SIDEBAR_EASE }}
       >
         <header className="flex items-start justify-between gap-3 px-5 py-4 border-b border-border">
           <div className="min-w-0 flex-1">
             <p className="text-[10px] uppercase tracking-[0.14em] text-brand font-semibold">
-              AI Feature Details
+              {LENS_AGENT_NAME} feature details
             </p>
             <code className="mt-1.5 block text-[12px] text-txt font-mono break-all leading-snug">
               {row.endpoint.path}
@@ -711,7 +712,7 @@ function SidebarBody({ row }: { row: Row }) {
     <div className="flex flex-col gap-6">
       <section>
         <p className="text-[11px] font-display font-semibold uppercase tracking-[0.12em] text-txt-dim mb-2">
-          AI Recommendation
+          {LENS_AGENT_NAME} recommendation
         </p>
         <p className="text-xs text-txt leading-relaxed">
           {row.investment.recommendation}

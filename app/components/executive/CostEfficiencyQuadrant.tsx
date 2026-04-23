@@ -19,6 +19,7 @@ import {
   idr,
   type QuadrantPoint,
 } from "@/app/lib/calculators";
+import { LENS_AGENT_NAME } from "@/app/lib/lensaiCopy";
 
 interface CostEfficiencyQuadrantProps {
   apps: App[];
@@ -269,7 +270,7 @@ function QuadrantTooltip({
         <Row label="Quadrant" value={p.quadrant} />
       </div>
       <div className="mt-1.5 pt-1.5 border-t border-border text-[10px] text-txt-dim">
-        Click to see AI recommendations
+        Click to run {LENS_AGENT_NAME} for this app
       </div>
     </div>
   );

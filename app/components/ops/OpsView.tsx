@@ -348,7 +348,7 @@ export function OpsView({ enriched, onSelect }: OpsViewProps) {
         />
       </div>
 
-      {/* AI Technical Summary */}
+      {/* LensAI+ technical summary */}
       <AITechnicalSummary enriched={enriched} onFocusArea={handleFocusArea} />
 
       {/* Ops KPI */}

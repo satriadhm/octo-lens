@@ -7,6 +7,11 @@ import {
   streamSimulate,
   type AgentState,
 } from "@/app/components/shared/AgentProcessState";
+import {
+  LENS_AGENT_NAME,
+  LENS_RUN_COMPLETE_ARIA,
+  LENS_RUN_COMPLETE_FOOTER,
+} from "@/app/lib/lensaiCopy";
 
 interface AISummaryProps {
   enriched: EnrichedApp[];
@@ -16,7 +21,7 @@ const STEPS = [
   "Reading application metrics...",
   "Fetching budget allocation data...",
   "Correlating usage patterns...",
-  "Generating recommendations...",
+  "Synthesizing executive briefing...",
 ];
 
 function buildExecSummary(enriched: EnrichedApp[]): string {
@@ -48,17 +53,19 @@ export function AISummary({ enriched }: AISummaryProps) {
     return cancel;
   }, [enriched, runId]);
 
+  const runAgain = `Run ${LENS_AGENT_NAME} again`;
+
   return (
     <div className="relative">
       <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <span className="text-[11px] font-display font-semibold text-brand tracking-[0.04em] uppercase">
-            AI Executive Summary
+            {LENS_AGENT_NAME} executive summary
           </span>
           {state === "success" && (
             <span
               className="inline-block w-1.5 h-1.5 rounded-full bg-ok"
-              aria-label="Analysis complete"
+              aria-label={LENS_RUN_COMPLETE_ARIA}
             />
           )}
           <span className="text-[11px] font-medium text-txt-dim bg-surface-dim border border-border rounded px-1.5 py-0.5 uppercase tracking-wider">
@@ -68,8 +75,8 @@ export function AISummary({ enriched }: AISummaryProps) {
         <button
           type="button"
           onClick={() => setRunId((n) => n + 1)}
-          aria-label="Regenerate summary"
-          title="Regenerate"
+          aria-label={`${runAgain} for executive summary`}
+          title={runAgain}
           className="inline-flex items-center justify-center h-10 w-10 rounded-md text-txt-muted hover:text-brand hover:bg-brand-light transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
         >
           <RefreshIcon />
@@ -110,7 +117,7 @@ export function AISummary({ enriched }: AISummaryProps) {
                 className="inline-block w-1 h-1 rounded-full bg-ok"
                 aria-hidden
               />
-              Analysis complete · Updated just now
+              {LENS_RUN_COMPLETE_FOOTER}
             </p>
           )}
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import type { App } from "@/app/lib/types";
+import { LENS_AGENT_NAME } from "@/app/lib/lensaiCopy";
 import { Label, Badge } from "@/app/components/shared/Card";
 
 interface FeaturesTabProps {
@@ -104,7 +105,7 @@ export function FeaturesTab({ app }: FeaturesTabProps) {
             </div>
             {isZombie && (
               <p className="text-xs text-danger mt-2 leading-relaxed">
-                <span className="font-semibold">AI Assessment:</span> This
+                <span className="font-semibold">{LENS_AGENT_NAME} assessment:</span> This
                 feature was built but is barely used. Evaluate whether to keep
                 it.
               </p>

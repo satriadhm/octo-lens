@@ -13,6 +13,11 @@ import {
   streamSimulate,
   type AgentState,
 } from "@/app/components/shared/AgentProcessState";
+import {
+  LENS_AGENT_NAME,
+  LENS_APP_BRIEFING_LABEL,
+  LENS_RUN_COMPLETE_ARIA,
+} from "@/app/lib/lensaiCopy";
 
 interface AISuggestPanelProps {
   app: App | null;
@@ -22,7 +27,7 @@ const STEPS = [
   "Reading application metrics...",
   "Fetching budget allocation data...",
   "Correlating usage patterns...",
-  "Generating recommendations...",
+  "Synthesizing briefing...",
 ];
 
 export function AISuggestPanel({ app }: AISuggestPanelProps) {
@@ -33,9 +38,12 @@ export function AISuggestPanel({ app }: AISuggestPanelProps) {
 function EmptyState() {
   return (
     <div className="h-full flex flex-col items-center justify-center text-center gap-2 p-6 min-h-[320px] border border-dashed border-border rounded-xl bg-surface-dim/20">
-      <p className="text-sm font-semibold text-txt">Suggestions</p>
+      <p className="text-sm font-semibold text-txt">{LENS_AGENT_NAME}</p>
+      <p className="text-[10px] text-txt-dim uppercase tracking-wider">
+        {LENS_APP_BRIEFING_LABEL}
+      </p>
       <p className="text-xs text-txt-muted max-w-[260px] leading-relaxed">
-        Select an application in the chart to see tailored recommendations.
+        Select an application in the chart to run {LENS_AGENT_NAME} for this app.
       </p>
     </div>
   );
@@ -124,26 +132,26 @@ function SelectedState({ app }: { app: App }) {
     >
       <div className="flex flex-col gap-3">
         {visibleLayers >= 1 && (
-          <LayerCard key="l1" title="What's happening">
+          <LayerCard key="l1" title="Signal">
             <p className="text-xs text-txt leading-relaxed">
               {suggestion.whatHappening}
             </p>
           </LayerCard>
         )}
         {visibleLayers >= 2 && (
-          <LayerCard key="l2" title="Why it matters">
+          <LayerCard key="l2" title="Implication">
             <p className="text-xs text-txt leading-relaxed">
               {suggestion.whyMatters}
             </p>
           </LayerCard>
         )}
         {visibleLayers >= 3 && (
-          <LayerCard key="l3" title="Rekomendasi infrastruktur">
+          <LayerCard key="l3" title="Infrastructure">
             <InfraRecommendationCard rec={suggestion.infraRecommendation} />
           </LayerCard>
         )}
         {visibleLayers >= 4 && (
-          <LayerCard key="l4" title="Langkah tindak lanjut">
+          <LayerCard key="l4" title="Prioritized actions">
             <ul className="flex flex-col gap-2">
               {suggestion.infraActions.map((a, i) => (
                 <ActionRow
@@ -174,18 +182,20 @@ function PanelShell({
   children: React.ReactNode;
   footerNote?: string;
 }) {
+  const runAgain = `Run ${LENS_AGENT_NAME} again`;
   return (
     <div className="flex flex-col bg-surface border border-border rounded-xl p-4 min-h-[320px]">
       <header className="flex items-start justify-between gap-3 mb-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[11px] font-medium text-txt-dim">
-              Suggestions
+              {LENS_AGENT_NAME}
             </span>
+            <span className="text-[10px] text-txt-dim/80">· {LENS_APP_BRIEFING_LABEL}</span>
             {state === "success" && (
               <span
                 className="inline-block w-1.5 h-1.5 rounded-full bg-ok"
-                aria-label="Analysis complete"
+                aria-label={LENS_RUN_COMPLETE_ARIA}
               />
             )}
           </div>
@@ -196,8 +206,8 @@ function PanelShell({
         <button
           type="button"
           onClick={onRefresh}
-          aria-label="Regenerate suggestion"
-          title="Regenerate"
+          aria-label={`${runAgain} for this app`}
+          title={runAgain}
           className="shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-md border border-border text-txt-muted hover:text-brand hover:border-brand/40 transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
         >
           <RefreshIcon />

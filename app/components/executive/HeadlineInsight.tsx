@@ -8,6 +8,7 @@ import {
   streamSimulate,
   type AgentState,
 } from "@/app/components/shared/AgentProcessState";
+import { LENS_AGENT_NAME } from "@/app/lib/lensaiCopy";
 
 interface HeadlineInsightProps {
   enriched: EnrichedApp[];
@@ -17,7 +18,7 @@ const STEPS = [
   "Reading application metrics...",
   "Fetching budget allocation data...",
   "Correlating usage patterns...",
-  "Generating portfolio headline...",
+  "Synthesizing portfolio headline...",
 ];
 
 export function HeadlineInsight({ enriched }: HeadlineInsightProps) {
@@ -42,23 +43,24 @@ export function HeadlineInsight({ enriched }: HeadlineInsightProps) {
   }, [headline.sentence, runId]);
 
   const showSentence = state === "streaming" || state === "success";
+  const runAgain = `Run ${LENS_AGENT_NAME} again`;
 
   return (
     <section
       className="rounded-xl border border-white/15 bg-brand text-white shadow-sm"
-      aria-label="Portfolio headline insight"
+      aria-label={`${LENS_AGENT_NAME} portfolio headline insight`}
     >
       <div className="relative flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-[11px] font-display font-semibold uppercase tracking-[0.1em] text-white/80">
-              Portfolio insight
+              {LENS_AGENT_NAME} · Portfolio insight
             </span>
             <button
               type="button"
               onClick={() => setRunId((n) => n + 1)}
-              aria-label="Regenerate headline"
-              title="Regenerate headline"
+              aria-label={`${runAgain} for portfolio headline`}
+              title={runAgain}
               className="ml-auto lg:hidden inline-flex items-center justify-center h-10 w-10 rounded-lg border border-white/25 bg-white/10 hover:bg-white/15 transition-colors text-white/90 focus-visible:outline-2 focus-visible:outline-white/60"
             >
               <RefreshIcon />
@@ -100,8 +102,8 @@ export function HeadlineInsight({ enriched }: HeadlineInsightProps) {
           <button
             type="button"
             onClick={() => setRunId((n) => n + 1)}
-            aria-label="Regenerate headline"
-            title="Regenerate headline"
+            aria-label={`${runAgain} for portfolio headline`}
+            title={runAgain}
             className="hidden lg:inline-flex items-center justify-center h-11 w-11 rounded-lg border border-white/25 bg-white/10 hover:bg-white/15 transition-colors text-white/90 focus-visible:outline-2 focus-visible:outline-white/60"
           >
             <RefreshIcon />

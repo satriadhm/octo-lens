@@ -13,6 +13,7 @@ import { CostEfficiencyQuadrant } from "./CostEfficiencyQuadrant";
 import { AISuggestPanel } from "./AISuggestPanel";
 import { FeatureValueMatrix } from "./FeatureValueMatrix";
 import { formatForPersona } from "@/app/lib/utils";
+import { LENS_AGENT_NAME } from "@/app/lib/lensaiCopy";
 
 interface ExecutiveViewProps {
   enriched: EnrichedApp[];
@@ -108,7 +109,7 @@ export function ExecutiveView({
         <HeadlineInsight enriched={enriched} />
       </div>
 
-      {/* SECTION 2 — Cost Efficiency Quadrant + AI Suggest Panel */}
+      {/* SECTION 2 — Cost Efficiency Quadrant + LensAI+ app briefing panel */}
       <section
         id="exec-quadrant"
         className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-5 animate-fade-in-up stagger-2"
@@ -118,7 +119,8 @@ export function ExecutiveView({
             <div>
               <Label>Cost Efficiency Quadrant</Label>
               <p className="text-[11px] text-txt-dim mt-0.5">
-                Bubble = budget allocation · Click any app to get AI suggestions
+                Bubble = budget allocation · Click any app to run {LENS_AGENT_NAME} for
+                an app briefing.
               </p>
             </div>
             {quadrantApp && (
@@ -178,7 +180,7 @@ export function ExecutiveView({
         </Card>
       </div>
 
-      {/* SECTION 4 — Top Risks + AI Summary */}
+      {/* SECTION 4 — Top Risks + LensAI+ executive summary */}
       <div
         id="exec-risks"
         className="grid grid-cols-1 lg:grid-cols-2 gap-5 animate-fade-in-up stagger-4"

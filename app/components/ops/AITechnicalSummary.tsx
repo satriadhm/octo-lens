@@ -8,6 +8,7 @@ import {
   streamSimulate,
   type AgentState,
 } from "@/app/components/shared/AgentProcessState";
+import { LENS_AGENT_NAME, LENS_RUN_COMPLETE_ARIA } from "@/app/lib/lensaiCopy";
 
 interface AITechnicalSummaryProps {
   enriched: EnrichedApp[];
@@ -20,7 +21,7 @@ const STEPS = [
   "Reading application metrics...",
   "Fetching telemetry traces...",
   "Correlating latency signals...",
-  "Generating technical summary...",
+  "Synthesizing technical summary...",
 ];
 
 interface CacheEntry {
@@ -106,20 +107,24 @@ export function AITechnicalSummary({
     return cancel;
   }, [summary.text, fingerprint, runId]);
 
+  const runAgain = `Run ${LENS_AGENT_NAME} again`;
+
   return (
     <section
       className="bg-surface border border-border rounded-xl overflow-hidden"
-      aria-label="AI Technical Summary"
+      aria-label={`${LENS_AGENT_NAME} technical summary`}
     >
       <header className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border bg-surface-dim/30">
         <div className="flex items-center gap-2 min-w-0">
           <div className="min-w-0">
             <h2 className="text-sm font-display font-bold text-txt flex items-center gap-2">
-              Technical summary
+              <span>
+                {LENS_AGENT_NAME} · Technical summary
+              </span>
               {state === "success" && (
                 <span
                   className="inline-block w-1.5 h-1.5 rounded-full bg-ok"
-                  aria-label="Fresh"
+                  aria-label={LENS_RUN_COMPLETE_ARIA}
                 />
               )}
             </h2>
@@ -136,8 +141,8 @@ export function AITechnicalSummary({
           <button
             type="button"
             onClick={() => setRunId((n) => n + 1)}
-            aria-label="Regenerate technical summary"
-            title="Regenerate"
+            aria-label={`${runAgain} for technical summary`}
+            title={runAgain}
             className="inline-flex items-center justify-center h-10 w-10 rounded-md text-txt-muted hover:text-brand hover:bg-brand-light transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
           >
             <RefreshIcon />

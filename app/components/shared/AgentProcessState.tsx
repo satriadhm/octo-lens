@@ -1,6 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
+import {
+  LENS_ERROR_UNAVAILABLE,
+  LENS_RUN_COMPLETE_FOOTER,
+} from "@/app/lib/lensaiCopy";
 
 export type AgentState =
   | "idle"
@@ -29,7 +33,7 @@ export function AgentProcessState({
   children,
   onRetry,
   idlePrompt,
-  completeLabel = "Analysis complete · Updated just now",
+  completeLabel = LENS_RUN_COMPLETE_FOOTER,
   className = "",
 }: AgentProcessStateProps) {
   if (state === "idle") {
@@ -132,7 +136,7 @@ export function AgentProcessState({
         </span>
         <div className="flex-1">
           <p className="text-xs text-txt font-medium">
-            AI analysis is temporarily unavailable
+            {LENS_ERROR_UNAVAILABLE}
           </p>
           <p className="text-[11px] text-txt-muted mt-0.5">
             You can try again in a moment — previously loaded content is kept

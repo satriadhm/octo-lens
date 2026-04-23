@@ -163,7 +163,7 @@ export function buildQuadrantPoints(apps: App[]): QuadrantPoint[] {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Executive headline (one-sentence AI banner)
+// Executive headline (one-sentence LensAI+ banner)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ExecHeadline {
@@ -225,7 +225,7 @@ export function buildExecHeadline(enriched: EnrichedApp[]): ExecHeadline {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Per-app AI suggestion (four-layer output)
+// Per-app LensAI+ briefing (four-layer output)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface InfraRecommendation {
