@@ -44,10 +44,10 @@ type SortKey = "name" | "module" | "usage" | "trend" | "classification" | "inves
 type SortDir = "asc" | "desc";
 
 const CLASS_ORDER: Record<FeatureClassification, number> = {
-  "STRATEGIC ASSET": 1,
-  "EMERGING ASSET": 2,
-  "UNDERPERFORMING": 3,
-  "DEPRECATION CANDIDATE": 4,
+  "DEPRECATION CANDIDATE": 1,
+  "UNDERPERFORMING": 2,
+  "EMERGING ASSET": 3,
+  "STRATEGIC ASSET": 4,
 };
 
 const TREND_ORDER: Record<FeatureTrend, number> = {
