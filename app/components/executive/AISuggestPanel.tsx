@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { App } from "@/app/lib/types";
-import { buildSuggestion, type Suggestion } from "@/app/lib/calculators";
+import {
+  buildSuggestion,
+  idr,
+  type InfraRecommendation,
+  type Suggestion,
+} from "@/app/lib/calculators";
 import {
   AgentProcessState,
   streamSimulate,
@@ -61,7 +66,10 @@ function SelectedState({ app }: { app: App }) {
           layerTimers.push(setTimeout(() => setVisibleLayers(1), 80));
           layerTimers.push(setTimeout(() => setVisibleLayers(2), 520));
           layerTimers.push(setTimeout(() => setVisibleLayers(3), 980));
-          layerTimers.push(setTimeout(() => setState("success"), 1300));
+          layerTimers.push(setTimeout(() => setVisibleLayers(4), 1380));
+          layerTimers.push(setTimeout(() => setState("success"), 1700));
+        } else if (s === "success") {
+          // Empty stream text finishes immediately; success is shown after layer 4 (see above).
         } else {
           setState(s);
         }
@@ -130,9 +138,14 @@ function SelectedState({ app }: { app: App }) {
           </LayerCard>
         )}
         {visibleLayers >= 3 && (
-          <LayerCard key="l3" title="Recommended actions">
+          <LayerCard key="l3" title="Rekomendasi infrastruktur">
+            <InfraRecommendationCard rec={suggestion.infraRecommendation} />
+          </LayerCard>
+        )}
+        {visibleLayers >= 4 && (
+          <LayerCard key="l4" title="Langkah tindak lanjut">
             <ul className="flex flex-col gap-2">
-              {suggestion.actions.map((a, i) => (
+              {suggestion.infraActions.map((a, i) => (
                 <ActionRow
                   key={i}
                   action={a}
@@ -221,12 +234,107 @@ function LayerCard({
   );
 }
 
+const DIRECTION_UI: Record<
+  InfraRecommendation["direction"],
+  {
+    label: string;
+    tier: string;
+    badge: { color: string; background: string };
+  }
+> = {
+  downgrade: {
+    label: "Downgrade Tier",
+    tier: "var(--color-ok)",
+    badge: { color: "var(--color-ok)", background: "var(--color-ok-dim)" },
+  },
+  upgrade: {
+    label: "Upgrade / Scale",
+    tier: "var(--color-warn)",
+    badge: { color: "var(--color-warn)", background: "var(--color-warn-dim)" },
+  },
+  maintain: {
+    label: "Pertahankan",
+    tier: "var(--color-info)",
+    badge: { color: "var(--color-info)", background: "var(--color-info-dim)" },
+  },
+  decommission: {
+    label: "Evaluasi Retire",
+    tier: "var(--color-txt-dim)",
+    badge: { color: "var(--color-txt-dim)", background: "var(--color-surface-dim)" },
+  },
+};
+
+function InfraRecommendationCard({ rec }: { rec: InfraRecommendation }) {
+  const dir = DIRECTION_UI[rec.direction];
+  const strikeCurrent =
+    rec.direction === "downgrade" || rec.direction === "decommission";
+
+  return (
+    <div className="relative">
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold"
+          style={dir.badge}
+        >
+          {dir.label}
+        </span>
+      </div>
+      <div className="mt-2 flex flex-wrap items-baseline gap-x-0">
+        <span
+          className={`font-mono text-[11px] text-txt-dim ${strikeCurrent ? "line-through" : ""}`}
+        >
+          {rec.currentTier}
+        </span>
+        <span className="text-txt-dim mx-1.5" aria-hidden>
+          →
+        </span>
+        <span
+          className="font-mono text-[11px] font-semibold"
+          style={{ color: dir.tier }}
+        >
+          {rec.recommendedTier}
+        </span>
+      </div>
+      <p className="text-xs text-txt-muted leading-relaxed mt-2 pr-1">
+        {rec.rationale}
+      </p>
+      {rec.estimatedMonthlySavingsIDR > 0 && (
+        <div className="mt-2 flex justify-end">
+          <span
+            className="inline-block text-[10px] font-semibold rounded px-2 py-0.5"
+            style={{
+              color: "var(--color-ok)",
+              background: "var(--color-ok-dim)",
+            }}
+          >
+            Hemat ~{idr(rec.estimatedMonthlySavingsIDR)}/bln
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const PRIORITY_DOT: Record<
+  "HIGH" | "MEDIUM" | "LOW",
+  string
+> = {
+  HIGH: "var(--color-danger)",
+  MEDIUM: "var(--color-warn)",
+  LOW: "var(--color-txt-dim)",
+};
+
 function ActionRow({
   action,
   checked,
   onToggle,
 }: {
-  action: { text: string; impact: string; tone: "save" | "risk" | "neutral" };
+  action: {
+    text: string;
+    impact: string;
+    priority: "HIGH" | "MEDIUM" | "LOW";
+    tone: "save" | "risk" | "neutral";
+  };
   checked: boolean;
   onToggle: () => void;
 }) {
@@ -274,8 +382,13 @@ function ActionRow({
           {action.text}
         </p>
         <span
-          className={`inline-block mt-1 text-[10px] font-semibold rounded px-1.5 py-0.5 border ${badgeClass}`}
+          className={`inline-flex items-center gap-1.5 mt-1 text-[10px] font-semibold rounded px-1.5 py-0.5 border ${badgeClass}`}
         >
+          <span
+            className="inline-block size-[6px] shrink-0 rounded-full"
+            style={{ background: PRIORITY_DOT[action.priority] }}
+            aria-hidden
+          />
           {action.impact}
         </span>
       </div>

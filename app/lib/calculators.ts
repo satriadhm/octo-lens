@@ -225,19 +225,29 @@ export function buildExecHeadline(enriched: EnrichedApp[]): ExecHeadline {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Per-app AI suggestion (three-layer output)
+// Per-app AI suggestion (four-layer output)
 // ─────────────────────────────────────────────────────────────────────────────
+
+export interface InfraRecommendation {
+  currentTier: string;
+  recommendedTier: string;
+  rationale: string;
+  estimatedMonthlySavingsIDR: number;
+  direction: "downgrade" | "upgrade" | "maintain" | "decommission";
+}
 
 export interface ActionItem {
   text: string;
   impact: string;
+  priority: "HIGH" | "MEDIUM" | "LOW";
   tone: "save" | "risk" | "neutral";
 }
 
 export interface Suggestion {
   whatHappening: string;
   whyMatters: string;
-  actions: ActionItem[];
+  infraRecommendation: InfraRecommendation;
+  infraActions: ActionItem[];
   timestampNote: string;
 }
 
@@ -246,6 +256,7 @@ export function buildSuggestion(app: App): Suggestion {
   const requests = app.metrics.totalRequests ?? app.api.totalReqs;
   const dailyRequests = Math.max(1, Math.round(requests / 30));
   const costPerRequest = monthlyCost / Math.max(1, requests);
+  const errorRate = app.metrics.errorRate ?? 0;
 
   const points = buildQuadrantPoints([app]);
   const quadrant = points[0]?.quadrant ?? "IDLE";
@@ -261,60 +272,145 @@ export function buildSuggestion(app: App): Suggestion {
           ? `Rasio biaya per request (${idr(costPerRequest)}) termasuk sehat — fokus berikutnya adalah menjaga SLA.`
           : `Biaya rendah tetapi pemanfaatannya juga rendah — pertimbangkan konsolidasi dengan aplikasi lain atau retire jika sudah tidak relevan.`;
 
-  const actions: ActionItem[] = [];
-
-  if (quadrant === "OVERSPENDING") {
-    const targetSpec = app.infra?.vmSpec?.includes("n2-standard-8")
-      ? "n2-standard-2"
-      : "kapasitas lebih rendah satu tingkat";
-    const saveAmount = Math.round(monthlyCost * 0.3);
-    actions.push({
-      text: `Downgrade VM dari ${app.infra?.vmSpec ?? "konfigurasi saat ini"} ke ${targetSpec}`,
-      impact: `Hemat ~${idr(saveAmount)}/bulan`,
-      tone: "save",
-    });
-  }
+  const currentTier = app.infra?.vmSpec ?? "Tidak diketahui";
+  const vmSpec = app.infra?.vmSpec ?? "";
 
   const zombies = (app.featureInvestments ?? []).filter(
     (f) => f.classification === "DEPRECATION CANDIDATE",
   );
-  if (zombies.length > 0) {
-    const investedSum = zombies.reduce((s, f) => s + f.investedIDR, 0);
-    actions.push({
-      text: `Review bersama Product Owner: ${zombies.length} fitur (${zombies.map((z) => z.module).join(", ")}) nyaris tidak diakses dalam 47 hari terakhir`,
-      impact: `Potensi realokasi ${idr(investedSum)}`,
+  const zombieSavingsPool = zombies.reduce((s, f) => s + f.investedIDR, 0);
+  const zombieSavingsMonthly = Math.round(zombieSavingsPool / 36);
+
+  let infraRecommendation: InfraRecommendation;
+  const infraActions: ActionItem[] = [];
+
+  if (quadrant === "OVERSPENDING") {
+    const recommendedTier = vmSpec.includes("n2-standard-8")
+      ? "n2-standard-2 x 2"
+      : "satu tingkat lebih rendah dari konfigurasi saat ini";
+    infraRecommendation = {
+      currentTier,
+      recommendedTier,
+      estimatedMonthlySavingsIDR: Math.round(monthlyCost * 0.3),
+      direction: "downgrade",
+      rationale:
+        "Utilisasi rendah tidak membutuhkan kapasitas ini — downgrade dapat memangkas biaya tanpa dampak SLA.",
+    };
+    infraActions.push({
+      text: "Aktifkan preemptible/spot instances untuk workload non-kritis",
+      impact: `Hemat ~${idr(Math.round(monthlyCost * 0.12))}/bulan`,
+      priority: "HIGH",
       tone: "save",
     });
-  }
-
-  if ((app.metrics.errorRate ?? 0) > 2) {
-    actions.push({
-      text: `Stabilkan endpoint dengan error rate > 2% sebelum rilis berikutnya`,
-      impact: `Turunkan risiko: TINGGI`,
+    infraActions.push({
+      text: "Audit dan hapus load balancer atau resource idle di environment prod",
+      impact: "Hemat biaya resource yang tidak terpakai",
+      priority: "MEDIUM",
+      tone: "save",
+    });
+    if (zombies.length > 0) {
+      infraActions.push({
+        text: `Hentikan serving path untuk ${zombies.length} fitur zombie (${zombies.map((z) => z.module).join(", ")}) — tidak diakses dalam 47 hari terakhir`,
+        impact: `Realokasi potensi investasi ${idr(zombieSavingsMonthly)}/bulan`,
+        priority: "HIGH",
+        tone: "save",
+      });
+    }
+  } else if (quadrant === "EFFICIENT") {
+    infraRecommendation = {
+      currentTier,
+      recommendedTier: "Pertahankan tier saat ini",
+      estimatedMonthlySavingsIDR: 0,
+      direction: "maintain",
+      rationale:
+        "Rasio biaya-utilisasi sudah optimal — tidak ada perubahan tier yang direkomendasikan saat ini.",
+    };
+    infraActions.push({
+      text: "Jadwalkan load test bulanan untuk memvalidasi kapasitas saat traffic peak",
+      impact: "Cegah degradasi SLA saat lonjakan tidak terduga",
+      priority: "MEDIUM",
       tone: "risk",
     });
-  }
-
-  if (quadrant === "UNDERPROVISIONED") {
-    actions.push({
-      text: `Jadwalkan upgrade kapasitas atau aktifkan autoscaling untuk menahan lonjakan beban`,
-      impact: `Turunkan risiko: MENENGAH`,
-      tone: "risk",
-    });
-  }
-
-  if (actions.length === 0) {
-    actions.push({
-      text: `Pertahankan konfigurasi saat ini dan dokumentasikan pelajaran untuk dijadikan referensi tim lain`,
-      impact: "Benchmark portofolio",
+    infraActions.push({
+      text: "Dokumentasikan konfigurasi ini sebagai referensi benchmark untuk tim lain",
+      impact: "Percepat keputusan rightsizing di portofolio",
+      priority: "LOW",
       tone: "neutral",
     });
+    if (errorRate > 1) {
+      infraActions.push({
+        text: `Stabilkan endpoint dengan error rate ${errorRate.toFixed(2)}% sebelum rilis berikutnya`,
+        impact: "Turunkan risiko reputasi: MENENGAH",
+        priority: "HIGH",
+        tone: "risk",
+      });
+    }
+  } else if (quadrant === "IDLE") {
+    infraRecommendation = {
+      currentTier,
+      recommendedTier: "Downgrade ke minimum atau pertimbangkan decommission",
+      estimatedMonthlySavingsIDR: Math.round(monthlyCost * 0.65),
+      direction: "decommission",
+      rationale:
+        "Biaya dan utilisasi keduanya rendah — kandidat konsolidasi atau penghentian layanan.",
+    };
+    infraActions.push({
+      text: "Jadwalkan review dengan Product Owner: konfirmasi apakah aplikasi masih dalam roadmap aktif",
+      impact: "Keputusan retire dapat membebaskan budget dan tim",
+      priority: "HIGH",
+      tone: "neutral",
+    });
+    infraActions.push({
+      text: "Freeze deployment baru sampai keputusan konsolidasi selesai",
+      impact: "Cegah investasi tambahan ke sistem yang mungkin dihentikan",
+      priority: "MEDIUM",
+      tone: "neutral",
+    });
+    if (zombies.length > 0) {
+      infraActions.push({
+        text: `${zombies.length} fitur (${zombies.map((z) => z.module).join(", ")}) hampir tidak diakses — jadikan prioritas pertama saat review`,
+        impact: `Potensi realokasi ${idr(zombieSavingsPool)}`,
+        priority: "HIGH",
+        tone: "save",
+      });
+    }
+  } else {
+    // UNDERPROVISIONED
+    infraRecommendation = {
+      currentTier,
+      recommendedTier: "Aktifkan autoscaling atau upgrade satu tier",
+      estimatedMonthlySavingsIDR: 0,
+      direction: "upgrade",
+      rationale:
+        "Utilisasi tinggi dengan kapasitas terbatas meningkatkan risiko antrean dan kegagalan saat jam sibuk.",
+    };
+    infraActions.push({
+      text: "Aktifkan horizontal autoscaling dengan threshold CPU 70% sebagai batas scale-out",
+      impact: "Turunkan risiko antrean saat jam sibuk: TINGGI",
+      priority: "HIGH",
+      tone: "risk",
+    });
+    infraActions.push({
+      text: "Pasang alert untuk P95 > 800ms dan error rate > 2% agar tim dinotifikasi sebelum SLA breach",
+      impact: "Deteksi dini degradasi performa",
+      priority: "HIGH",
+      tone: "risk",
+    });
+    if (errorRate > 2) {
+      infraActions.push({
+        text: `Stabilkan endpoint dengan error rate ${errorRate.toFixed(2)}% — risiko meningkat seiring utilisasi naik`,
+        impact: "Turunkan risiko kegagalan cascade: TINGGI",
+        priority: "HIGH",
+        tone: "risk",
+      });
+    }
   }
 
   return {
     whatHappening,
     whyMatters,
-    actions,
+    infraRecommendation,
+    infraActions,
     timestampNote: "Agent menganalisis berdasarkan data 1 – 22 April 2026",
   };
 }
