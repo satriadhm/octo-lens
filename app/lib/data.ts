@@ -103,7 +103,7 @@ export const APPS: App[] = [
         path: "/transfer/interbank",
         module: "Payments",
         investedIDR: 1_600_000_000,
-        classification: "HIGH VALUE",
+        classification: "STRATEGIC ASSET",
         trend: "up",
         recommendation:
           "Pertahankan kapasitas dan tingkatkan monitoring saat jam sibuk untuk menjaga pengalaman transfer.",
@@ -113,7 +113,7 @@ export const APPS: App[] = [
         path: "/loan/kpr/apply",
         module: "Lending",
         investedIDR: 820_000_000,
-        classification: "ZOMBIE CANDIDATE",
+        classification: "DEPRECATION CANDIDATE",
         trend: "dead",
         recommendation:
           "Arahkan pengguna ke jalur KPR Digital atau pertimbangkan penghentian fitur ini di rilis berikutnya.",
@@ -123,7 +123,7 @@ export const APPS: App[] = [
         path: "/investment/reksa",
         module: "Wealth",
         investedIDR: 540_000_000,
-        classification: "HIDDEN GEM",
+        classification: "EMERGING ASSET",
         trend: "up",
         recommendation:
           "Adopsi rendah namun error rate sangat baik — naikkan promosi fitur Reksa Dana di homepage.",
@@ -200,7 +200,7 @@ export const APPS: App[] = [
         path: "/transfer/domestic",
         module: "Payments",
         investedIDR: 780_000_000,
-        classification: "AT RISK",
+        classification: "UNDERPERFORMING",
         trend: "flat",
         recommendation:
           "P95 mendekati 600ms dan error rate meningkat — review kapasitas database dan koneksi core banking.",
@@ -210,7 +210,7 @@ export const APPS: App[] = [
         path: "/report/statement",
         module: "Reporting",
         investedIDR: 420_000_000,
-        classification: "HIGH VALUE",
+        classification: "STRATEGIC ASSET",
         trend: "up",
         recommendation:
           "Fitur Laporan tumbuh stabil — pertahankan performa dan tambahkan opsi ekspor yang lebih modern.",
@@ -220,7 +220,7 @@ export const APPS: App[] = [
         path: "/export/csv",
         module: "Reporting",
         investedIDR: 310_000_000,
-        classification: "ZOMBIE CANDIDATE",
+        classification: "DEPRECATION CANDIDATE",
         trend: "dead",
         recommendation:
           "Adopsi di bawah 1% dan turun terus — gabungkan ke fitur Laporan atau retire sebelum kuartal berikutnya.",
@@ -295,7 +295,7 @@ export const APPS: App[] = [
         path: "/kpr/simulate",
         module: "Simulation",
         investedIDR: 1_100_000_000,
-        classification: "AT RISK",
+        classification: "UNDERPERFORMING",
         trend: "flat",
         recommendation:
           "Trafik tinggi namun P95 di atas 2 detik dan error rate 3.6% — prioritaskan tuning query dan caching.",
@@ -305,7 +305,7 @@ export const APPS: App[] = [
         path: "/kpr/apply",
         module: "Origination",
         investedIDR: 1_480_000_000,
-        classification: "ZOMBIE CANDIDATE",
+        classification: "DEPRECATION CANDIDATE",
         trend: "down",
         recommendation:
           "Hanya 10% adopsi dengan error 4%+ — perbaiki alur pengajuan atau pertimbangkan migrasi ke Mobile Banking.",
@@ -315,7 +315,7 @@ export const APPS: App[] = [
         path: "/kpr/document/upload",
         module: "Origination",
         investedIDR: 620_000_000,
-        classification: "ZOMBIE CANDIDATE",
+        classification: "DEPRECATION CANDIDATE",
         trend: "dead",
         recommendation:
           "Hampir tidak dipakai dan performa lambat — review apakah fitur upload dapat digabung ke E-Sign.",
@@ -384,7 +384,7 @@ export const APPS: App[] = [
         path: "/approval/pending",
         module: "Approval",
         investedIDR: 320_000_000,
-        classification: "HIGH VALUE",
+        classification: "STRATEGIC ASSET",
         trend: "flat",
         recommendation:
           "Core workflow operasional — jaga SLA dan tambahkan notifikasi untuk approval yang tertahan.",
@@ -394,7 +394,7 @@ export const APPS: App[] = [
         path: "/recon/daily",
         module: "Reconciliation",
         investedIDR: 280_000_000,
-        classification: "AT RISK",
+        classification: "UNDERPERFORMING",
         trend: "flat",
         recommendation:
           "P95 menembus 500ms di akhir bulan — jadwalkan batch rekonsiliasi di luar jam sibuk.",
@@ -460,7 +460,7 @@ export const APPS: App[] = [
         path: "/fx/trade",
         module: "Trading",
         investedIDR: 2_400_000_000,
-        classification: "HIGH VALUE",
+        classification: "STRATEGIC ASSET",
         trend: "up",
         recommendation:
           "Backbone revenue — pastikan kapasitas auto-scale dan simulasikan beban puncak bulanan.",
@@ -470,7 +470,7 @@ export const APPS: App[] = [
         path: "/bond/settlement",
         module: "Settlement",
         investedIDR: 1_250_000_000,
-        classification: "HIGH VALUE",
+        classification: "STRATEGIC ASSET",
         trend: "flat",
         recommendation:
           "Volume stabil dengan error rate rendah — pertahankan SLA dan dokumentasikan disaster recovery.",

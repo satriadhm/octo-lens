@@ -26,10 +26,10 @@ type SortKey = "name" | "module" | "usage" | "trend" | "classification" | "inves
 type SortDir = "asc" | "desc";
 
 const CLASS_ORDER: Record<FeatureClassification, number> = {
-  "HIGH VALUE": 1,
-  "HIDDEN GEM": 2,
-  "AT RISK": 3,
-  "ZOMBIE CANDIDATE": 4,
+  "STRATEGIC ASSET": 1,
+  "EMERGING ASSET": 2,
+  "UNDERPERFORMING": 3,
+  "DEPRECATION CANDIDATE": 4,
 };
 
 const TREND_ORDER: Record<FeatureTrend, number> = {
@@ -39,7 +39,23 @@ const TREND_ORDER: Record<FeatureTrend, number> = {
   dead: 4,
 };
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 6;
+
+type PageItem = number | "ellipsis";
+
+function getPageItems(current: number, total: number): PageItem[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  const items: PageItem[] = [1];
+  const left = Math.max(2, current - 1);
+  const right = Math.min(total - 1, current + 1);
+  if (left > 2) items.push("ellipsis");
+  for (let i = left; i <= right; i++) items.push(i);
+  if (right < total - 1) items.push("ellipsis");
+  items.push(total);
+  return items;
+}
 
 export function FeatureValueMatrix({
   apps,
@@ -127,7 +143,7 @@ export function FeatureValueMatrix({
   }, [sorted, page]);
 
   const zombies = rows.filter(
-    (r) => r.investment.classification === "ZOMBIE CANDIDATE",
+    (r) => r.investment.classification === "DEPRECATION CANDIDATE",
   );
   const zombieIDR = zombies.reduce((s, r) => s + r.investment.investedIDR, 0);
 
@@ -205,7 +221,7 @@ export function FeatureValueMatrix({
           const rowKey = `${row.app.id}-${row.investment.path}`;
           const isOpen = expanded === rowKey;
           const isZombie =
-            row.investment.classification === "ZOMBIE CANDIDATE";
+            row.investment.classification === "DEPRECATION CANDIDATE";
           return (
             <div
               key={rowKey}
@@ -348,27 +364,58 @@ export function FeatureValueMatrix({
             </span>{" "}
             dari {sorted.length} fitur
           </p>
-          <div className="flex items-center gap-2">
+          <nav
+            aria-label="Pagination"
+            className="flex items-center gap-1.5 flex-wrap"
+          >
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
+              aria-label="Halaman sebelumnya"
               className="h-9 px-3 rounded-md border border-border text-[11px] font-semibold text-txt hover:bg-surface disabled:opacity-40 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-brand/40"
             >
-              Sebelumnya
+              ← Prev
             </button>
-            <span className="text-[11px] text-txt-muted tabular-nums px-1">
-              Halaman {page} / {totalPages}
-            </span>
+            <ul className="flex items-center gap-1">
+              {getPageItems(page, totalPages).map((item, i) =>
+                item === "ellipsis" ? (
+                  <li
+                    key={`e-${i}`}
+                    aria-hidden
+                    className="px-1.5 text-[11px] text-txt-dim tabular-nums select-none"
+                  >
+                    …
+                  </li>
+                ) : (
+                  <li key={item}>
+                    <button
+                      type="button"
+                      onClick={() => setPage(item)}
+                      aria-label={`Halaman ${item}`}
+                      aria-current={item === page ? "page" : undefined}
+                      className={`h-9 min-w-9 px-2.5 rounded-md border text-[11px] font-semibold tabular-nums focus-visible:outline-2 focus-visible:outline-brand/40 ${
+                        item === page
+                          ? "border-brand bg-brand text-white"
+                          : "border-border text-txt hover:bg-surface"
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  </li>
+                ),
+              )}
+            </ul>
             <button
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
+              aria-label="Halaman berikutnya"
               className="h-9 px-3 rounded-md border border-border text-[11px] font-semibold text-txt hover:bg-surface disabled:opacity-40 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-brand/40"
             >
-              Berikutnya
+              Next →
             </button>
-          </div>
+          </nav>
         </footer>
       )}
     </section>
@@ -426,7 +473,7 @@ function FeatureRow({
   onToggle: () => void;
   hideAppName: boolean;
 }) {
-  const isZombie = row.investment.classification === "ZOMBIE CANDIDATE";
+  const isZombie = row.investment.classification === "DEPRECATION CANDIDATE";
   const rowTone = isZombie
     ? isOpen
       ? "bg-danger/15"
@@ -542,22 +589,22 @@ function ClassBadge({ classification }: { classification: FeatureClassification 
     FeatureClassification,
     { bg: string; text: string; border: string }
   > = {
-    "HIGH VALUE": {
+    "STRATEGIC ASSET": {
       bg: "bg-ok/12",
       text: "text-ok",
       border: "border-ok/25",
     },
-    "AT RISK": {
+    "UNDERPERFORMING": {
       bg: "bg-warn/15",
       text: "text-warn",
       border: "border-warn/30",
     },
-    "ZOMBIE CANDIDATE": {
+    "DEPRECATION CANDIDATE": {
       bg: "bg-danger/12",
       text: "text-danger",
       border: "border-danger/25",
     },
-    "HIDDEN GEM": {
+    "EMERGING ASSET": {
       bg: "bg-[color-mix(in_oklch,_oklch(0.55_0.22_300)_12%,_transparent)]",
       text: "text-[oklch(0.55_0.22_300)]",
       border: "border-[color-mix(in_oklch,_oklch(0.55_0.22_300)_28%,_transparent)]",
@@ -573,38 +620,7 @@ function ClassBadge({ classification }: { classification: FeatureClassification 
   );
 }
 
-function ExpandedPanel({ row }: { row: Row }) {
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 items-start">
-      <div className="flex flex-col gap-2">
-        <p className="text-[11px] font-display font-semibold uppercase tracking-[0.12em] text-txt-dim">
-          AI Recommendation
-        </p>
-        <p className="text-xs text-txt leading-relaxed">
-          {row.investment.recommendation}
-        </p>
-      </div>
-      <div className="grid grid-cols-2 gap-3 min-w-[280px]">
-        <MiniStat
-          label="Adoption"
-          value={`${row.endpoint.adoption}%`}
-        />
-        <MiniStat
-          label="Calls (30d)"
-          value={row.endpoint.calls.toLocaleString()}
-        />
-        <MiniStat
-          label="P95"
-          value={`${Math.round(row.endpoint.p95Ms ?? 0)}ms`}
-        />
-        <MiniStat
-          label="Error rate"
-          value={`${(row.endpoint.errorRate ?? 0).toFixed(2)}%`}
-        />
-      </div>
-    </div>
-  );
-}
+const SIDEBAR_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 
 function RecommendationSidebar({
   row,
@@ -616,61 +632,140 @@ function RecommendationSidebar({
   onClose: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement | null>(null);
+  const hasContent = row !== null;
+  const visible = isOpen && hasContent;
 
   useEffect(() => {
-    if (isOpen) {
-      const id = window.setTimeout(() => {
-        closeRef.current?.focus();
-      }, 50);
-      return () => window.clearTimeout(id);
-    }
-  }, [isOpen]);
+    if (!visible) return;
+    const focusTimer = window.setTimeout(() => {
+      closeRef.current?.focus();
+    }, 280);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.clearTimeout(focusTimer);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [visible, onClose]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [visible]);
 
   return (
     <>
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 z-40 transition-opacity duration-300"
-          onClick={onClose}
-          aria-hidden
-        />
-      )}
-      <aside
-        aria-label="AI Feature Recommendation Details"
-        aria-hidden={!isOpen}
-        className={`fixed top-0 right-0 h-full w-full sm:w-[480px] bg-surface border-l border-border z-50 flex flex-col shadow-xl transition-transform duration-300 ease-out ${
-          isOpen ? "translate-x-0" : "translate-x-full"
+      <div
+        onClick={onClose}
+        aria-hidden
+        className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-300 motion-reduce:transition-none ${
+          visible ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
+        style={{ transitionTimingFunction: SIDEBAR_EASE }}
+      />
+      <aside
+        aria-label="AI feature recommendation details"
+        aria-hidden={!visible}
+        className={`fixed top-0 right-0 h-full w-full sm:w-[440px] bg-surface border-l border-border z-50 flex flex-col shadow-[-16px_0_48px_-16px_rgba(0,0,0,0.25)] will-change-transform transition-transform duration-[320ms] motion-reduce:transition-none ${
+          visible
+            ? "translate-x-0"
+            : "translate-x-full pointer-events-none"
+        }`}
+        style={{ transitionTimingFunction: SIDEBAR_EASE }}
       >
-        <header className="flex items-start justify-between gap-3 px-5 py-4 border-b border-border">
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] uppercase tracking-wider text-brand font-semibold">
-              AI Feature Details
-            </p>
-            <code className="mt-1 block text-[12px] text-txt font-mono break-all">
-              {row?.endpoint.path}
-            </code>
-            {row && (
-              <div className="mt-2">
-                <ClassBadge classification={row.investment.classification} />
+        {hasContent && (
+          <>
+            <header className="flex items-start justify-between gap-3 px-5 py-4 border-b border-border">
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] uppercase tracking-[0.14em] text-brand font-semibold">
+                  AI Feature Details
+                </p>
+                <code className="mt-1.5 block text-[12px] text-txt font-mono break-all leading-snug">
+                  {row.endpoint.path}
+                </code>
+                <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+                  <ClassBadge classification={row.investment.classification} />
+                  <span className="text-[11px] text-txt-muted truncate">
+                    {row.investment.module}
+                  </span>
+                </div>
               </div>
-            )}
-          </div>
-          <button
-            ref={closeRef}
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="h-9 w-9 rounded-md hover:bg-surface-dim text-txt-muted hover:text-txt flex items-center justify-center text-lg shrink-0 focus-visible:outline-2 focus-visible:outline-brand/40"
-          >
-            ×
-          </button>
-        </header>
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          {row && <ExpandedPanel row={row} />}
-        </div>
+              <button
+                ref={closeRef}
+                type="button"
+                onClick={onClose}
+                aria-label="Close details"
+                className="h-9 w-9 rounded-md hover:bg-surface-dim text-txt-muted hover:text-txt flex items-center justify-center text-lg shrink-0 transition-colors focus-visible:outline-2 focus-visible:outline-brand/40"
+              >
+                ×
+              </button>
+            </header>
+            <div className="flex-1 overflow-y-auto px-5 py-5">
+              <SidebarBody row={row} />
+            </div>
+          </>
+        )}
       </aside>
     </>
+  );
+}
+
+function SidebarBody({ row }: { row: Row }) {
+  return (
+    <div className="flex flex-col gap-6">
+      <section>
+        <p className="text-[11px] font-display font-semibold uppercase tracking-[0.12em] text-txt-dim mb-2">
+          AI Recommendation
+        </p>
+        <p className="text-xs text-txt leading-relaxed">
+          {row.investment.recommendation}
+        </p>
+      </section>
+
+      <section>
+        <p className="text-[11px] font-display font-semibold uppercase tracking-[0.12em] text-txt-dim mb-2.5">
+          Feature Metrics
+        </p>
+        <div className="grid grid-cols-2 gap-2.5">
+          <MiniStat label="Adoption" value={`${row.endpoint.adoption}%`} />
+          <MiniStat
+            label="Calls (30d)"
+            value={row.endpoint.calls.toLocaleString()}
+          />
+          <MiniStat
+            label="P95"
+            value={`${Math.round(row.endpoint.p95Ms ?? 0)}ms`}
+          />
+          <MiniStat
+            label="Error rate"
+            value={`${(row.endpoint.errorRate ?? 0).toFixed(2)}%`}
+          />
+        </div>
+      </section>
+
+      <section>
+        <p className="text-[11px] font-display font-semibold uppercase tracking-[0.12em] text-txt-dim mb-2.5">
+          Investment &amp; Trend
+        </p>
+        <div className="rounded-md border border-border bg-surface px-3 py-2.5 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[11px] uppercase tracking-[0.12em] text-txt-dim font-semibold">
+              Est. Investment
+            </div>
+            <div className="text-[13px] font-display font-bold text-txt tabular-nums truncate">
+              {idr(row.investment.investedIDR)}
+            </div>
+          </div>
+          <TrendCell trend={row.investment.trend} />
+        </div>
+      </section>
+    </div>
   );
 }
 

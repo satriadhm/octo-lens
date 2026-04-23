@@ -180,7 +180,7 @@ export function buildExecHeadline(enriched: EnrichedApp[]): ExecHeadline {
   const overBudget = enriched.filter((e) => e.budget.level !== "SAFE");
   const zombies = enriched.flatMap((e) =>
     (e.app.featureInvestments ?? []).filter(
-      (f) => f.classification === "ZOMBIE CANDIDATE",
+      (f) => f.classification === "DEPRECATION CANDIDATE",
     ),
   );
   const needsAttention = new Set<string>([
@@ -189,7 +189,7 @@ export function buildExecHeadline(enriched: EnrichedApp[]): ExecHeadline {
     ...enriched
       .filter((e) =>
         (e.app.featureInvestments ?? []).some(
-          (f) => f.classification === "ZOMBIE CANDIDATE",
+          (f) => f.classification === "DEPRECATION CANDIDATE",
         ),
       )
       .map((e) => e.app.id),
@@ -276,7 +276,7 @@ export function buildSuggestion(app: App): Suggestion {
   }
 
   const zombies = (app.featureInvestments ?? []).filter(
-    (f) => f.classification === "ZOMBIE CANDIDATE",
+    (f) => f.classification === "DEPRECATION CANDIDATE",
   );
   if (zombies.length > 0) {
     const investedSum = zombies.reduce((s, f) => s + f.investedIDR, 0);

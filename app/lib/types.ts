@@ -54,10 +54,10 @@ export interface AppInfra {
 }
 
 export type FeatureClassification =
-  | "HIGH VALUE"
-  | "AT RISK"
-  | "ZOMBIE CANDIDATE"
-  | "HIDDEN GEM";
+  | "STRATEGIC ASSET"
+  | "UNDERPERFORMING"
+  | "DEPRECATION CANDIDATE"
+  | "EMERGING ASSET";
 
 export type FeatureTrend = "up" | "flat" | "down" | "dead";
 
