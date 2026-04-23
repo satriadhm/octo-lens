@@ -30,7 +30,7 @@ const ICON_OPS = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" str
 const EXEC_AREAS: ExecArea[] = [
   {
     id: "executive",
-    label: " Budget Health Monitoring",
+    label: "Budget Monitoring",
     icon: ICON_BUDGET,
     subItems: [
       { id: "exec-overview", label: "Portfolio Overview" },
@@ -105,19 +105,6 @@ export function Sidebar({ mode, onModeChange }: SidebarProps) {
     };
   }, [mode, activeExecArea]);
 
-  const handleSuiteToggle = useCallback(
-    (next: Suite) => {
-      if (next === suite) return;
-      if (next === "operation") {
-        onModeChange("ops");
-      } else {
-        onModeChange("executive");
-      }
-      setActiveSubItem(null);
-    },
-    [suite, onModeChange],
-  );
-
   const handleExecArea = useCallback(
     (id: Extract<ViewMode, "executive" | "system">) => {
       if (id !== mode) {
@@ -135,7 +122,7 @@ export function Sidebar({ mode, onModeChange }: SidebarProps) {
 
   const collapsedTargets: { mode: ViewMode; icon: string; label: string }[] =
     [
-      { mode: "executive", icon: ICON_BUDGET, label: " Budget Health Monitoring" },
+      { mode: "executive", icon: ICON_BUDGET, label: "Budget Monitoring" },
       { mode: "system", icon: ICON_SYSTEM, label: "System Efficiency" },
       { mode: "ops", icon: ICON_OPS, label: "Operation" },
     ];
@@ -192,41 +179,6 @@ export function Sidebar({ mode, onModeChange }: SidebarProps) {
         </nav>
       ) : (
         <>
-          <div className="px-2 pt-2 pb-2 border-b border-border">
-            <div
-              className="flex rounded-lg bg-surface-dim p-0.5 gap-0.5"
-              role="tablist"
-              aria-label="Primary area"
-            >
-              <button
-                type="button"
-                role="tab"
-                aria-selected={suite === "executive"}
-                onClick={() => handleSuiteToggle("executive")}
-                className={`flex-1 min-w-0 rounded-md px-2 py-2 text-[11px] font-sans font-semibold leading-none transition-colors cursor-pointer border-none focus-visible:outline-2 focus-visible:outline-brand/40 ${
-                  suite === "executive"
-                    ? "bg-surface text-brand shadow-sm"
-                    : "bg-transparent text-txt-muted hover:text-txt"
-                }`}
-              >
-                Executive
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={suite === "operation"}
-                onClick={() => handleSuiteToggle("operation")}
-                className={`flex-1 min-w-0 rounded-md px-2 py-2 text-[11px] font-sans font-semibold leading-none transition-colors cursor-pointer border-none focus-visible:outline-2 focus-visible:outline-brand/40 ${
-                  suite === "operation"
-                    ? "bg-surface text-brand shadow-sm"
-                    : "bg-transparent text-txt-muted hover:text-txt"
-                }`}
-              >
-                Operation
-              </button>
-            </div>
-          </div>
-
           {suite === "executive" && (
             <nav
               className="pt-2 pb-1 border-b border-border"
